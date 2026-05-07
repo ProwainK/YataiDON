@@ -5,6 +5,10 @@
 #include <fstream>
 #include <spdlog/spdlog.h>
 
+#ifdef _WIN32
+    #include <windows.h>
+#endif
+
 void set_working_directory_to_executable() {
 #ifdef _WIN32
     wchar_t buffer[MAX_PATH];
