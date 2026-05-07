@@ -85,19 +85,19 @@ Screens GameScreen::on_screen_end(Screens next_screen) {
 }
 
 void GameScreen::load_hitsounds() {
-    fs::path sounds_dir = audio->sounds_path;
+    fs::path sounds_dir = audio.sounds_path;
     if (global_data.hit_sound[(int)global_data.player_num] == -1) {
-        audio->load_sound("", "hitsound_don_1p");
-        audio->load_sound(sounds_dir / "hit_sounds" / std::to_string(global_data.hit_sound[(int)PlayerNum::P1]) / "ka.wav", "hitsound_kat_1p");
-        audio->load_sound(sounds_dir / "hit_sounds" / std::to_string(global_data.hit_sound[(int)PlayerNum::P1]) / "don.wav", "hitsound_don_1p");
-        audio->load_sound(sounds_dir / "hit_sounds" / std::to_string(global_data.hit_sound[(int)PlayerNum::P2]) / "ka.wav", "hitsound_kat_2p");
-        audio->load_sound(sounds_dir / "hit_sounds" / std::to_string(global_data.hit_sound[(int)PlayerNum::P2]) / "don.wav", "hitsound_don_2p");
+        audio.load_sound("", "hitsound_don_1p");
+        audio.load_sound(sounds_dir / "hit_sounds" / std::to_string(global_data.hit_sound[(int)PlayerNum::P1]) / "ka.wav", "hitsound_kat_1p");
+        audio.load_sound(sounds_dir / "hit_sounds" / std::to_string(global_data.hit_sound[(int)PlayerNum::P1]) / "don.wav", "hitsound_don_1p");
+        audio.load_sound(sounds_dir / "hit_sounds" / std::to_string(global_data.hit_sound[(int)PlayerNum::P2]) / "ka.wav", "hitsound_kat_2p");
+        audio.load_sound(sounds_dir / "hit_sounds" / std::to_string(global_data.hit_sound[(int)PlayerNum::P2]) / "don.wav", "hitsound_don_2p");
         spdlog::info("Loaded wav hit sounds for 1P and 2P");
     } else {
-        audio->load_sound(sounds_dir / "hit_sounds" / std::to_string(global_data.hit_sound[(int)PlayerNum::P1]) / "don.ogg", "hitsound_don_1p");
-        audio->load_sound(sounds_dir / "hit_sounds" / std::to_string(global_data.hit_sound[(int)PlayerNum::P1]) / "ka.ogg", "hitsound_kat_1p");
-        audio->load_sound(sounds_dir / "hit_sounds" / std::to_string(global_data.hit_sound[(int)PlayerNum::P2]) / "don.ogg", "hitsound_don_2p");
-        audio->load_sound(sounds_dir / "hit_sounds" / std::to_string(global_data.hit_sound[(int)PlayerNum::P2]) / "ka.ogg", "hitsound_kat_2p");
+        audio.load_sound(sounds_dir / "hit_sounds" / std::to_string(global_data.hit_sound[(int)PlayerNum::P1]) / "don.ogg", "hitsound_don_1p");
+        audio.load_sound(sounds_dir / "hit_sounds" / std::to_string(global_data.hit_sound[(int)PlayerNum::P1]) / "ka.ogg", "hitsound_kat_1p");
+        audio.load_sound(sounds_dir / "hit_sounds" / std::to_string(global_data.hit_sound[(int)PlayerNum::P2]) / "don.ogg", "hitsound_don_2p");
+        audio.load_sound(sounds_dir / "hit_sounds" / std::to_string(global_data.hit_sound[(int)PlayerNum::P2]) / "ka.ogg", "hitsound_kat_2p");
         spdlog::info("Loaded ogg hit sounds for 1P and 2P");
     }
 }
@@ -116,7 +116,7 @@ void GameScreen::init_tja(fs::path song) {
     global_data.session_data[(int)global_data.player_num].song_subtitle = subtitles.count(lang) ? subtitles.at(lang) : "";
 
     if (fs::exists(parser->metadata.wave) && !song_music.has_value()) {
-        song_music = audio->load_sound(parser->metadata.wave, "song");
+        song_music = audio.load_sound(parser->metadata.wave, "song");
     }
 
     players.push_back(std::make_unique<Player>(parser, global_data.player_num, global_data.session_data[(int)global_data.player_num].selected_difficulty, false, global_data.modifiers[(int)global_data.player_num]));
@@ -126,7 +126,7 @@ void GameScreen::init_tja(fs::path song) {
 void GameScreen::start_song(double ms_from_start) {
     if (ms_from_start >= parser->metadata.offset*1000 + start_delay - (double)global_data.config->general.audio_offset && !song_started) {
         if (song_music.has_value()) {
-            audio->play_sound(song_music.value(), "music");
+            audio.play_sound(song_music.value(), "music");
             spdlog::info("Song started at {}", ms_from_start);
         }
         if (movie.has_value()) {
@@ -142,14 +142,14 @@ void GameScreen::pause_song() {
     double audio_time;
     if (paused) {
         if (song_music.has_value()) {
-            audio_time = audio->get_sound_time_played(song_music.value());
-            audio->stop_sound(song_music.value());
+            audio_time = audio.get_sound_time_played(song_music.value());
+            audio.stop_sound(song_music.value());
         }
         pause_time = get_current_ms() - start_ms;
     } else {
         if (song_music.has_value()) {
-            audio->play_sound(song_music.value(), "music");
-            audio->seek_sound(song_music.value(), audio_time);
+            audio.play_sound(song_music.value(), "music");
+            audio.seek_sound(song_music.value(), audio_time);
         }
         start_ms = get_current_ms() - pause_time;
     }
@@ -157,11 +157,11 @@ void GameScreen::pause_song() {
 
 void GameScreen::restart_song() {
     if (song_music.has_value()) {
-        audio->stop_sound(song_music.value());
+        audio.stop_sound(song_music.value());
     }
     players.clear();
     init_tja(global_data.session_data[(int)global_data.player_num].selected_song);
-    audio->play_sound("restart", "sound");
+    audio.play_sound("restart", "sound");
     song_started = false;
 }
 
@@ -171,7 +171,7 @@ std::optional<Screens> GameScreen::global_keys() {
 
     if (ray::IsKeyPressed(global_data.config->keys.back_key)) {
         if (song_music.has_value())
-            audio->stop_sound(song_music.value());
+            audio.stop_sound(song_music.value());
         return on_screen_end(Screens::SONG_SELECT);
     }
 
@@ -233,9 +233,9 @@ void GameScreen::save_score(int player_id) {
 void GameScreen::resync_song(double current_ms) {
     if (!song_started) return;
     if (!song_music.has_value()) return;
-    if (!audio->is_sound_playing(song_music.value())) return;
+    if (!audio.is_sound_playing(song_music.value())) return;
 
-    double audio_ms = audio->get_sound_time_played(song_music.value()) * 1000.0f;
+    double audio_ms = audio.get_sound_time_played(song_music.value()) * 1000.0f;
     double audio_ms_adjusted = audio_ms + (parser->metadata.offset * 1000 + start_delay - (double)global_data.config->general.audio_offset);
 
     if (std::abs(ms_from_start - audio_ms_adjusted) > Timing::GOOD) {
@@ -257,7 +257,7 @@ void GameScreen::end_song() {
     if (ms_from_start >= players[0]->end_time + 8533.34) {
         if (!result_transition.is_started) {
             result_transition.start();
-            audio->play_sound("result_transition", "voice");
+            audio.play_sound("result_transition", "voice");
             spdlog::info("Result transition started and voice played");
         }
     }
@@ -285,7 +285,7 @@ std::optional<Screens> GameScreen::update() {
     song_info.update(current_ms);
     result_transition.update(current_ms);
 
-    if (result_transition.is_finished && !audio->is_sound_playing("result_transition")) {
+    if (result_transition.is_finished && !audio.is_sound_playing("result_transition")) {
         return on_screen_end(Screens::RESULT);
     } else if (ms_from_start >= players[0]->end_time) {
         end_song();

@@ -1,5 +1,5 @@
 #include "box_song.h"
-#include "../../../libs/audio_engine.h"
+#include "../../../libs/audio.h"
 
 SongBox::SongBox(const fs::path& path, const BoxDef& box_def, SongParser parser)
     : BaseBox(path, box_def)
@@ -29,8 +29,8 @@ void SongBox::refresh_scores() {
 void SongBox::reset() {
     BaseBox::reset();
     diff_fade_in = (FadeAnimation*)tex.get_animation(12);
-    if (audio->is_music_stream_valid("preview")) {
-        audio->unload_music_stream("preview");
+    if (audio.is_music_stream_valid("preview")) {
+        audio.unload_music_stream("preview");
     }
     music_playing = false;
     score_history.reset();
@@ -71,11 +71,11 @@ void SongBox::update(double current_time) {
 
     if (yellow_box.has_value() && (yellow_box->left_out != nullptr) && yellow_box->left_out->is_finished && fs::exists(parser.metadata.wave) && !music_playing) {
         music_playing = true;
-        audio->stop_sound("bgm");
-        audio->load_music_stream(parser.metadata.wave, "preview");
-        if (audio->is_music_stream_valid("preview")) {
-            audio->play_music_stream("preview", "music");
-            audio->seek_music_stream("preview", parser.metadata.demostart);
+        audio.stop_sound("bgm");
+        audio.load_music_stream(parser.metadata.wave, "preview");
+        if (audio.is_music_stream_valid("preview")) {
+            audio.play_music_stream("preview", "music");
+            audio.seek_music_stream("preview", parser.metadata.demostart);
         }
     }
 
@@ -101,11 +101,11 @@ void SongBox::close_box() {
     BaseBox::close_box();
     box_opened_at = 0.0;
     if (music_playing) {
-        if (audio->is_music_stream_valid("preview")) {
-            audio->stop_music_stream("preview");
-            audio->unload_music_stream("preview");
+        if (audio.is_music_stream_valid("preview")) {
+            audio.stop_music_stream("preview");
+            audio.unload_music_stream("preview");
         }
-        audio->play_sound("bgm", "music");
+        audio.play_sound("bgm", "music");
         music_playing = false;
     }
 }

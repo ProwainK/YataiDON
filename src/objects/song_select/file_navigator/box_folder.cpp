@@ -1,7 +1,7 @@
 #include "box_folder.h"
 #include "../../../libs/filesystem.h"
 #include "../../../libs/scores.h"
-#include "../../../libs/audio_engine.h"
+#include "../../../libs/audio.h"
 
 FolderBox::FolderBox(const fs::path& path, const BoxDef& box_def, int tja_count, std::map<std::pair<std::string, std::string>, fs::path>& song_files)
     : BaseBox(path, box_def), tja_count(tja_count)
@@ -76,11 +76,11 @@ void FolderBox::update(double current_time) {
     BaseBox::update(current_time);
 
     if (!is_open_prev && yellow_box_opened) {
-        if (!audio->is_sound_playing("voice_enter")) {
-            audio->play_sound("genre_voice_" + std::to_string((int)genre_index), "voice");
+        if (!audio.is_sound_playing("voice_enter")) {
+            audio.play_sound("genre_voice_" + std::to_string((int)genre_index), "voice");
         }
-    } else if (!yellow_box_opened && audio->is_sound_playing("genre_voice_" + std::to_string((int)genre_index))) {
-        audio->stop_sound("genre_voice_" + std::to_string((int)genre_index));
+    } else if (!yellow_box_opened && audio.is_sound_playing("genre_voice_" + std::to_string((int)genre_index))) {
+        audio.stop_sound("genre_voice_" + std::to_string((int)genre_index));
     }
 }
 

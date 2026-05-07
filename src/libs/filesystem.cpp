@@ -5,6 +5,26 @@
 #include <fstream>
 #include <spdlog/spdlog.h>
 
+void set_working_directory_to_executable() {
+#ifdef _WIN32
+    wchar_t buffer[MAX_PATH];
+    GetModuleFileNameW(NULL, buffer, MAX_PATH);
+    std::filesystem::path exe_path(buffer);
+#else
+    char buffer[PATH_MAX];
+    ssize_t len = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
+    if (len == -1) {
+        spdlog::error("Failed to get executable path");
+        return;
+    }
+    buffer[len] = '\0';
+    std::filesystem::path exe_path(buffer);
+#endif
+    std::filesystem::path exe_dir = exe_path.parent_path();
+    std::filesystem::current_path(exe_dir);
+    spdlog::info("Working directory set to: {}", exe_dir.string());
+}
+
 void save_hash_cache(const SongCache& cache, const fs::path& cache_path) {
     std::ofstream f(cache_path, std::ios::binary);
     if (!f.is_open()) {

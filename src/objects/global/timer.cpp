@@ -1,7 +1,7 @@
 #include "timer.h"
 #include "../../libs/global_data.h"
 #include "../../libs/texture.h"
-#include "../../libs/audio_engine.h"
+#include "../../libs/audio.h"
 
 Timer::Timer(int time, double current_time_ms, std::function<void()> confirm_func)
     : time(time), last_time(current_time_ms), counter(std::to_string(time)),
@@ -13,7 +13,7 @@ Timer::Timer(int time, double current_time_ms, std::function<void()> confirm_fun
 }
 
 void Timer::update(double current_ms) {
-    if (time == 0 && !is_finished && !audio->is_sound_playing("voice_timer_0")) {
+    if (time == 0 && !is_finished && !audio.is_sound_playing("voice_timer_0")) {
         is_finished = true;
         confirm_func();
     }
@@ -26,17 +26,17 @@ void Timer::update(double current_ms) {
         last_time = current_ms;
         counter = std::to_string(time);
         if (time < 10) {
-            audio->play_sound("timer_blip", "sound");
+            audio.play_sound("timer_blip", "sound");
             num_resize->start();
             highlight_fade->start();
             highlight_resize->start();
         }
         if (time == 10) {
-            audio->play_sound("voice_timer_10", "voice");
+            audio.play_sound("voice_timer_10", "voice");
         } else if (time == 5) {
-            audio->play_sound("voice_timer_5", "voice");
+            audio.play_sound("voice_timer_5", "voice");
         } else if (time == 0) {
-            audio->play_sound("voice_timer_0", "voice");
+            audio.play_sound("voice_timer_0", "voice");
         }
     }
 }

@@ -1,5 +1,5 @@
 #include "neiro.h"
-#include "../../libs/audio_engine.h"
+#include "../../libs/audio.h"
 
 NeiroSelector::NeiroSelector(PlayerNum player_num) : player_num(player_num) {
     selected_sound = global_data.hit_sound[(int)player_num];
@@ -26,7 +26,7 @@ NeiroSelector::NeiroSelector(PlayerNum player_num) : player_num(player_num) {
     sounds.push_back("無音");
     selected_sound = std::clamp(selected_sound, 0, (int)sounds.size() - 1);
     load_sound();
-    audio->play_sound("voice_hitsound_select_" + std::to_string((int)player_num) + "p", "voice");
+    audio.play_sound("voice_hitsound_select_" + std::to_string((int)player_num) + "p", "voice");
 
     move = (MoveAnimation*)tex.get_animation(28, true);
     move->start();
@@ -45,16 +45,16 @@ void NeiroSelector::load_sound() {
         / global_data.config->paths.skin
         / "Sounds" / "hit_sounds" / std::to_string(selected_sound);
     if (selected_sound == 0) {
-        curr_sound = audio->load_sound(base / "don.wav", "hit_sound");
+        curr_sound = audio.load_sound(base / "don.wav", "hit_sound");
     } else {
-        curr_sound = audio->load_sound(base / "don.ogg", "hit_sound");
+        curr_sound = audio.load_sound(base / "don.ogg", "hit_sound");
     }
 }
 
 void NeiroSelector::left() {
     if (move->is_started && !move->is_finished) return;
     selected_sound = ((selected_sound - 1) % (int)sounds.size() + (int)sounds.size()) % (int)sounds.size();
-    audio->unload_sound(curr_sound);
+    audio.unload_sound(curr_sound);
     load_sound();
     move_sideways->start();
     fade_sideways->start();
@@ -64,13 +64,13 @@ void NeiroSelector::left() {
 
     direction = -1;
     if (selected_sound == (int)sounds.size() - 1) return;
-    audio->play_sound(curr_sound, "hitsound");
+    audio.play_sound(curr_sound, "hitsound");
 }
 
 void NeiroSelector::right() {
     if (move->is_started && !move->is_finished) return;
     selected_sound = (selected_sound + 1) % (int)sounds.size();
-    audio->unload_sound(curr_sound);
+    audio.unload_sound(curr_sound);
     load_sound();
     move_sideways->start();
     fade_sideways->start();
@@ -80,7 +80,7 @@ void NeiroSelector::right() {
 
     direction = 1;
     if (selected_sound == (int)sounds.size() - 1) return;
-    audio->play_sound(curr_sound, "hitsound");
+    audio.play_sound(curr_sound, "hitsound");
 }
 
 void NeiroSelector::confirm() {

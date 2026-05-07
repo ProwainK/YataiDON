@@ -1,8 +1,9 @@
 #include <iostream>
 #include <rlgl.h>
 
-#include "libs/global_data.h"
 #include "libs/audio.h"
+#include "libs/global_data.h"
+#include "libs/filesystem.h"
 #include "libs/input.h"
 #include "libs/logging.h"
 #include "libs/screen.h"
@@ -30,46 +31,11 @@
 
 #include "objects/global/fps_counter.h"
 
-#ifdef __EMSCRIPTEN__
-#include <emscripten.h>
-#endif
-
-#ifdef AUDIO_BACKEND_RAYLIB
-#include "libs/audio_raylib.h"
-#endif
-
 #ifdef _WIN32
     #include <windows.h>
 #endif
 
 namespace fs = std::filesystem;
-
-void set_working_directory_to_executable() {
-#ifdef __EMSCRIPTEN__
-    // Preloaded files are mounted at the root of the virtual filesystem.
-    std::filesystem::current_path("/");
-    return;
-#elif defined(_WIN32)
-    wchar_t buffer[MAX_PATH];
-    GetModuleFileNameW(NULL, buffer, MAX_PATH);
-    std::filesystem::path exe_path(buffer);
-#else
-    char buffer[PATH_MAX];
-    ssize_t len = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
-    if (len == -1) {
-        spdlog::error("Failed to get executable path");
-        return;
-    }
-    buffer[len] = '\0';
-    std::filesystem::path exe_path(buffer);
-#endif
-
-#ifndef __EMSCRIPTEN__
-    std::filesystem::path exe_dir = exe_path.parent_path();
-    std::filesystem::current_path(exe_dir);
-    spdlog::info("Working directory set to: {}", exe_dir.string());
-#endif
-}
 
 void update_camera_for_window_size(ray::Camera2D& camera, int virtual_width, int virtual_height) {
     int screen_width = ray::GetScreenWidth();
@@ -110,37 +76,6 @@ void draw_outer_border(int screen_width, int screen_height, ray::Color last_colo
     DrawRectangle(screen_width, 0, screen_width, screen_height, last_color);
     DrawRectangle(0, -screen_height, screen_width, screen_height, last_color);
     DrawRectangle(0, screen_height, screen_width, screen_height, last_color);
-}
-
-void init_audio() {
-#ifdef AUDIO_BACKEND_RAYLIB
-    audio = std::make_unique<RaylibAudioEngine>(global_data.config->volume);
-#else
-    audio = std::make_unique<AudioEngine>(
-        global_data.config->audio.device_type,
-        global_data.config->audio.sample_rate,
-        global_data.config->audio.buffer_size,
-        global_data.config->volume
-    );
-#endif
-    fs::path skin_sounds = fs::path("Skins") / global_data.config->paths.skin / "Sounds";
-    if (fs::exists(skin_sounds)) {
-        audio->sounds_path = skin_sounds;
-    } else {
-        spdlog::error("Skin sounds directory not found, audio may not load correctly");
-    }
-    audio->init_audio_device();
-    spdlog::info("Audio device initialized");
-}
-
-void set_config_flags() {
-    if (global_data.config->video.vsync) {
-        ray::SetConfigFlags(ray::FLAG_VSYNC_HINT);
-        spdlog::info("VSync enabled");
-    }
-    ray::SetConfigFlags(ray::FLAG_MSAA_4X_HINT);
-    ray::SetConfigFlags(ray::FLAG_WINDOW_RESIZABLE);
-    ray::SetTraceLogLevel(ray::LOG_ERROR);
 }
 
 Screens check_args(int argc, char* argv[]) {
@@ -233,7 +168,7 @@ Screens check_args(int argc, char* argv[]) {
 }
 
 struct LoopState {
-    std::unordered_map<Screens, Screen*> screen_mapping;
+    std::unordered_map<Screens, std::unique_ptr<Screen>> screens;
     Screens current_screen = Screens::LOADING;
     ray::Camera2D camera   = {};
     int screen_width       = 0;
@@ -241,25 +176,6 @@ struct LoopState {
     std::chrono::duration<double> target_duration = std::chrono::duration<double>(1.0 / 60.0);
     FPSCounter fps_counter;
     ray::Color last_color = ray::BLACK;
-
-    std::unique_ptr<TitleScreen>     title_screen;
-    std::unique_ptr<EntryScreen>     entry_screen;
-    std::unique_ptr<SongSelectScreen> song_select_screen;
-    std::unique_ptr<SongSelect2PScreen> song_select_2p_screen;
-    std::unique_ptr<LoadingScreen>   load_screen;
-    std::unique_ptr<GameScreen>              game_screen;
-    std::unique_ptr<Game2PScreen>            game_2p_screen;
-    std::unique_ptr<PracticeGameScreen>      practice_game_screen;
-    std::unique_ptr<PracticeSongSelectScreen> practice_select_screen;
-    std::unique_ptr<ResultScreen>            result_screen;
-    std::unique_ptr<Result2PScreen>          result_2p_screen;
-    std::unique_ptr<DanSelectScreen>         dan_select_screen;
-    std::unique_ptr<DanGameScreen>           dan_game_screen;
-    std::unique_ptr<DanResultScreen>         dan_result_screen;
-    std::unique_ptr<SettingsScreen>          settings_screen;
-    std::unique_ptr<InputCaliScreen>         input_cali_screen;
-    std::unique_ptr<SkinViewerScreen>        skin_viewer_screen;
-    std::unique_ptr<SandboxScreen>           sandbox_screen;
 };
 
 static LoopState* g_loop = nullptr;
@@ -267,11 +183,7 @@ static LoopState* g_loop = nullptr;
 static void run_frame() {
     LoopState& L = *g_loop;
 
-#ifdef __EMSCRIPTEN__
-    poll_keyboard_once();
-#endif
     ray::PollInputEvents();
-    audio->update();  // no-op for PortAudio; required by raylib raudio backend
 
     auto frame_start = std::chrono::steady_clock::now();
 
@@ -295,7 +207,7 @@ static void run_frame() {
     ray::BeginMode2D(L.camera);
     ray::BeginBlendMode(ray::BLEND_CUSTOM_SEPARATE);
 
-    Screen* screen = L.screen_mapping[L.current_screen];
+    Screen* screen = L.screens[L.current_screen].get();
 
     std::optional<Screens> next_screen = screen->update();
 
@@ -322,66 +234,77 @@ static void run_frame() {
     ray::EndDrawing();
     ray::SwapScreenBuffer();
 
-#ifndef __EMSCRIPTEN__
     auto elapsed   = std::chrono::steady_clock::now() - frame_start;
     auto remaining = L.target_duration - elapsed;
     if (remaining > std::chrono::duration<double>::zero()) {
         std::this_thread::sleep_for(remaining);
     }
-#endif
 }
 
 int main(int argc, char* argv[]) {
-#ifdef _WIN32
-    SetConsoleCP(CP_UTF8);
-    SetConsoleOutputCP(CP_UTF8);
-    setlocale(LC_ALL, ".UTF-8");
-#else
-    setlocale(LC_ALL, "");
-#endif
+    spdlog::info("Starting YataiDON");
     set_working_directory_to_executable();
     global_data.config = new Config(get_config());
+    if (global_data.config->video.vsync) {
+        ray::SetConfigFlags(ray::FLAG_VSYNC_HINT);
+        spdlog::info("VSync enabled");
+    }
+    ray::SetConfigFlags(ray::FLAG_MSAA_4X_HINT);
+    ray::SetConfigFlags(ray::FLAG_WINDOW_RESIZABLE);
+    ray::SetTraceLogLevel(ray::LOG_ERROR);
     setup_logging(global_data.config->general.log_level);
 
-    fs::path skin_path = fs::path("Skins") / global_data.config->paths.skin / "Graphics";
-    if (fs::exists(skin_path)) {
-        tex.init(skin_path);
-    } else {
-        spdlog::warn("Skin directory not found, skipping texture initialization");
-    }
+    fs::path root_skin_path = fs::path("Skins") / global_data.config->paths.skin;
 
-    fs::path script_path = fs::path("Skins") / global_data.config->paths.skin / "Scripts";
-    if (fs::exists(script_path)) {
-        script_manager.init(script_path);
-    } else {
-        spdlog::warn("Skin directory not found, skipping script initialization");
-    }
+    tex.init(root_skin_path / "Graphics");
+
+    ray::InitWindow(tex.screen_width, tex.screen_height, "YataiDON");
+
+    global_tex.init(root_skin_path / "Graphics");
+    global_tex.load_screen_textures("global");
+    script_manager.init(root_skin_path / "Scripts");
+    font_manager.init(root_skin_path / "Graphics/font.ttf");
+    audio.init_audio_device(root_skin_path / "Sounds", global_data.config->audio, global_data.config->volume);
 
     scores_manager.player_1 = scores_manager.add_player(global_data.config->nameplate_1p.name);
     scores_manager.player_2 = scores_manager.add_player(global_data.config->nameplate_2p.name);
-    spdlog::info("Starting YataiDON");
-    spdlog::info("Screen size: " + std::to_string(tex.screen_width) + "x" + std::to_string(tex.screen_height));
 
-    set_config_flags();
-    ray::InitWindow(tex.screen_width, tex.screen_height, "YataiDON");
+    Screens initial_screen = check_args(argc, argv);
 
-    fs::path font_path = fs::path("Skins") / global_data.config->paths.skin / "Graphics/font.ttf";
-    if (fs::exists(font_path)) {
-        font_manager.init(font_path);
-    } else {
-        spdlog::warn("Font file not found, skipping font initialization");
+    double target_fps = global_data.config->video.target_fps;
+    if (target_fps != -1) {
+        spdlog::info("Target FPS set to {}", target_fps);
     }
 
-    spdlog::info("Window initialized: " + std::to_string(tex.screen_width) + "x" + std::to_string(tex.screen_height));
-    if (fs::exists(skin_path)) {
-        global_tex.init(skin_path);
-    } else {
-        spdlog::warn("Skin directory not found, skipping global texture initialization");
-    }
-    global_tex.load_screen_textures("global");
-    //global_tex.load_folder("chara", "chara_0");
-    //global_tex.load_folder("chara", "chara_1");
-    //global_tex.load_folder("chara", "chara_4");
+    g_loop = new LoopState();
+    LoopState& L = *g_loop;
+
+    L.screen_width    = tex.screen_width;
+    L.screen_height   = tex.screen_height;
+    L.current_screen  = initial_screen;
+    L.target_duration = std::chrono::duration<double>(1.0 / target_fps);
+
+    L.screens[Screens::ENTRY]           = std::make_unique<EntryScreen>();
+    L.screens[Screens::TITLE]           = std::make_unique<TitleScreen>();
+    L.screens[Screens::SONG_SELECT]     = std::make_unique<SongSelectScreen>();
+    L.screens[Screens::SONG_SELECT_2P]  = std::make_unique<SongSelect2PScreen>();
+    L.screens[Screens::LOADING]         = std::make_unique<LoadingScreen>();
+    L.screens[Screens::GAME]            = std::make_unique<GameScreen>();
+    L.screens[Screens::GAME_2P]         = std::make_unique<Game2PScreen>();
+    L.screens[Screens::GAME_PRACTICE]   = std::make_unique<PracticeGameScreen>();
+    L.screens[Screens::PRACTICE_SELECT] = std::make_unique<PracticeSongSelectScreen>();
+    L.screens[Screens::RESULT]          = std::make_unique<ResultScreen>();
+    L.screens[Screens::RESULT_2P]       = std::make_unique<Result2PScreen>();
+    L.screens[Screens::DAN_SELECT]      = std::make_unique<DanSelectScreen>();
+    L.screens[Screens::GAME_DAN]        = std::make_unique<DanGameScreen>();
+    L.screens[Screens::DAN_RESULT]      = std::make_unique<DanResultScreen>();
+    L.screens[Screens::SETTINGS]        = std::make_unique<SettingsScreen>();
+    L.screens[Screens::INPUT_CALI]      = std::make_unique<InputCaliScreen>();
+    L.screens[Screens::SKIN_VIEWER]     = std::make_unique<SkinViewerScreen>();
+    L.screens[Screens::SANDBOX]         = std::make_unique<SandboxScreen>();
+
+    update_camera_for_window_size(L.camera, L.screen_width, L.screen_height);
+
     if (global_data.config->video.borderless) {
         ray::ToggleBorderlessWindowed();
         spdlog::info("Borderless window enabled");
@@ -391,77 +314,11 @@ int main(int argc, char* argv[]) {
         spdlog::info("Fullscreen enabled");
     }
 
-    init_audio();
-
-    Screens initial_screen = check_args(argc, argv);
-
-    double target_fps = global_data.config->video.target_fps;
-    if (target_fps != -1) {
-        spdlog::info("Target FPS set to {}", target_fps);
-    }
-
-    // Build loop state
-    g_loop = new LoopState();
-    LoopState& L = *g_loop;
-
-    L.screen_width    = tex.screen_width;
-    L.screen_height   = tex.screen_height;
-    L.current_screen  = initial_screen;
-    L.target_duration = std::chrono::duration<double>(1.0 / target_fps);
-
-    L.title_screen           = std::make_unique<TitleScreen>();
-    L.entry_screen           = std::make_unique<EntryScreen>();
-    L.song_select_screen     = std::make_unique<SongSelectScreen>();
-    L.song_select_2p_screen  = std::make_unique<SongSelect2PScreen>();
-    L.load_screen            = std::make_unique<LoadingScreen>();
-    L.game_screen            = std::make_unique<GameScreen>();
-    L.game_2p_screen         = std::make_unique<Game2PScreen>();
-    L.practice_game_screen   = std::make_unique<PracticeGameScreen>();
-    L.practice_select_screen = std::make_unique<PracticeSongSelectScreen>();
-    L.result_screen          = std::make_unique<ResultScreen>();
-    L.result_2p_screen       = std::make_unique<Result2PScreen>();
-    L.dan_select_screen      = std::make_unique<DanSelectScreen>();
-    L.dan_game_screen        = std::make_unique<DanGameScreen>();
-    L.dan_result_screen      = std::make_unique<DanResultScreen>();
-    L.settings_screen        = std::make_unique<SettingsScreen>();
-    L.input_cali_screen      = std::make_unique<InputCaliScreen>();
-    L.skin_viewer_screen     = std::make_unique<SkinViewerScreen>();
-    L.sandbox_screen         = std::make_unique<SandboxScreen>();
-
-    L.screen_mapping = {
-        {Screens::ENTRY,            L.entry_screen.get()},
-        {Screens::TITLE,            L.title_screen.get()},
-        {Screens::SONG_SELECT,      L.song_select_screen.get()},
-        {Screens::SONG_SELECT_2P,   L.song_select_2p_screen.get()},
-        {Screens::GAME,             L.game_screen.get()},
-        {Screens::GAME_2P,          L.game_2p_screen.get()},
-        {Screens::GAME_PRACTICE,    L.practice_game_screen.get()},
-        {Screens::PRACTICE_SELECT,  L.practice_select_screen.get()},
-        {Screens::RESULT,           L.result_screen.get()},
-        {Screens::RESULT_2P,        L.result_2p_screen.get()},
-        {Screens::DAN_SELECT,       L.dan_select_screen.get()},
-        {Screens::GAME_DAN,         L.dan_game_screen.get()},
-        {Screens::DAN_RESULT,       L.dan_result_screen.get()},
-        {Screens::SETTINGS,         L.settings_screen.get()},
-        {Screens::INPUT_CALI,       L.input_cali_screen.get()},
-        {Screens::LOADING,          L.load_screen.get()},
-        {Screens::SKIN_VIEWER,      L.skin_viewer_screen.get()},
-        {Screens::SANDBOX,          L.sandbox_screen.get()},
-    };
-
-    update_camera_for_window_size(L.camera, L.screen_width, L.screen_height);
-    spdlog::info("Camera2D initialized");
-
     rlSetBlendFactorsSeparate(RL_SRC_ALPHA, RL_ONE_MINUS_SRC_ALPHA, RL_ONE, RL_ONE_MINUS_SRC_ALPHA, RL_FUNC_ADD, RL_FUNC_ADD);
     ray::SetExitKey(global_data.config->keys.exit_key);
     ray::HideCursor();
-    spdlog::info("Cursor hidden");
 
-#ifdef __EMSCRIPTEN__
-    emscripten_set_main_loop(run_frame, 0, 1);
-#else
     input_thread = std::thread(input_polling_thread);
-    spdlog::info("Input polling thread started");
 
     while (!ray::WindowShouldClose()) {
         run_frame();
@@ -475,10 +332,8 @@ int main(int argc, char* argv[]) {
     delete g_loop;
     global_tex.unload_textures();
     tex.unload_textures();
-    script_manager.tex.unload_textures();
     script_manager.shutdown();
     ray::CloseWindow();
-    audio->close_audio_device();
-    spdlog::info("Window closed and audio device shut down");
-#endif
+    audio.close_audio_device();
+    spdlog::info("Game closed");
 }

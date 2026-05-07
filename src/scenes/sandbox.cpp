@@ -53,7 +53,7 @@ void SandboxScreen::ensure_screen_loaded(const std::string& screen_name) {
     if (screen_name == "global" || screen_name == loaded_screen) return;
     try {
         tex.load_screen_textures(screen_name);
-        audio->load_screen_sounds(screen_name);
+        audio.load_screen_sounds(screen_name);
     } catch (const std::exception& e) {
         spdlog::warn("Sandbox: could not load {} assets: {}", screen_name, e.what());
     }
@@ -65,7 +65,7 @@ void SandboxScreen::on_screen_start() {
     loaded_screen = "game";
     try {
         tex.load_screen_textures("game");
-        audio->load_screen_sounds("game");
+        audio.load_screen_sounds("game");
     } catch (const std::exception& e) {
         spdlog::warn("Sandbox: could not load game assets: {}", e.what());
     }

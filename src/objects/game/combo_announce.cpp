@@ -1,6 +1,6 @@
 #include "combo_announce.h"
 #include "../../libs/texture.h"
-#include "../../libs/audio_engine.h"
+#include "../../libs/audio.h"
 
 ComboAnnounce::ComboAnnounce(int combo, double current_ms, PlayerNum player_num)
     : combo(combo), wait(current_ms), player_num(player_num),
@@ -20,7 +20,7 @@ void ComboAnnounce::update(double current_ms) {
 
     if (!audio_played && combo >= 100) {
         std::string sound_name = "combo_" + std::to_string(combo) + "_" + std::to_string(static_cast<int>(player_num)) + "p";
-        audio->play_sound(sound_name, "voice");
+        audio.play_sound(sound_name, "voice");
         audio_played = true;
     }
 }

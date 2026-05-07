@@ -1,6 +1,6 @@
 #include "result_crown.h"
 #include "../../libs/texture.h"
-#include "../../libs/audio_engine.h"
+#include "../../libs/audio.h"
 
 ResultCrown::ResultCrown(bool is_2p) : is_2p(is_2p) {
     resize = (TextureResizeAnimation*)tex.get_animation(2);
@@ -22,7 +22,7 @@ void ResultCrown::update(double current_ms) {
     white_fadein->update(current_ms);
     gleam->update(current_ms);
     if (resize_fix->is_finished && !sound_played) {
-        audio->play_sound("crown", "sound");
+        audio.play_sound("crown", "sound");
         sound_played = true;
     }
 }

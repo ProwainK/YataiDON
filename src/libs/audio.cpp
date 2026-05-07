@@ -1,7 +1,4 @@
 #include "audio.h"
-#include "global_data.h"
-
-#ifndef AUDIO_BACKEND_RAYLIB
 
 static sf_count_t vf_get_filelen(void* user_data) {
     auto* vf = static_cast<VirtualFile*>(user_data);
@@ -42,21 +39,8 @@ static sf_count_t vf_tell(void* user_data) {
     return static_cast<VirtualFile*>(user_data)->pos;
 }
 
-AudioEngine::AudioEngine(int host_api_index, float sample_rate, unsigned long buffer_size, const VolumeConfig& volume_presets)
-    : host_api_index(std::max(host_api_index, 0))
-    , target_sample_rate(sample_rate < 0 ? 44100.0f : sample_rate)
-    , buffer_size(buffer_size)
-    , volume_presets(volume_presets)
-    , is_ready(false)
-    , master_volume(1.0f)
-    , stream(nullptr)
+AudioEngine::AudioEngine()
 {
-    fs::path skin_path = fs::path("Skins") / global_data.config->paths.skin / "Sounds";
-    if (fs::exists(skin_path)) {
-        sounds_path = skin_path;
-    } else {
-        spdlog::error("Skin directory not found, skipping audio initialization");
-    }
 }
 
 AudioEngine::~AudioEngine() {
@@ -254,7 +238,15 @@ int AudioEngine::port_audio_callback(const void *inputBuffer, void *outputBuffer
     return paContinue;
 }
 
-bool AudioEngine::init_audio_device() {
+bool AudioEngine::init_audio_device(const fs::path& sounds_path, const AudioConfig& audio_config, const VolumeConfig& volume_presets) {
+    this->sounds_path = sounds_path;
+    this->host_api_index = std::max(audio_config.device_type, 0);
+    this->target_sample_rate = audio_config.sample_rate < 0 ? 44100.0f : audio_config.sample_rate;
+    this->buffer_size = audio_config.buffer_size;
+    this->volume_presets = volume_presets;
+    this->is_ready = false;
+    this->master_volume = 1.0f;
+    this->stream = nullptr;
     try {
         PaError err = Pa_Initialize();
         if (err != paNoError) {
@@ -459,6 +451,50 @@ std::string AudioEngine::load_sound(const fs::path& file_path, const std::string
     } catch (const std::exception& e) {
         spdlog::error("Error loading sound {}: {}", file_path.string(), e.what());
         return "";
+    }
+}
+
+void AudioEngine::load_screen_sounds(const std::string& screen_name) {
+    fs::path path = sounds_path / screen_name;
+    if (!fs::exists(path)) {
+        spdlog::warn("Sounds for screen {} not found", screen_name);
+        return;
+    }
+
+    load_sound(sounds_path / "don.wav", "don");
+    load_sound(sounds_path / "ka.wav",  "kat");
+
+    try {
+        for (const auto& entry : fs::directory_iterator(path)) {
+            if (entry.is_directory()) {
+                for (const auto& file : fs::directory_iterator(entry.path())) {
+                    load_sound(file.path(),
+                                entry.path().stem().string() + "_" + file.path().stem().string());
+                }
+            } else if (entry.is_regular_file()) {
+                load_sound(entry.path(), entry.path().stem().string());
+            }
+        }
+    } catch (const fs::filesystem_error& e) {
+        spdlog::error("load_screen_sounds: error scanning {}: {}", path.string(), e.what());
+    }
+
+    fs::path global_path = sounds_path / "global";
+    if (fs::exists(global_path)) {
+        try {
+            for (const auto& entry : fs::directory_iterator(global_path)) {
+                if (entry.is_directory()) {
+                    for (const auto& file : fs::directory_iterator(entry.path())) {
+                        load_sound(file.path(),
+                                    entry.path().stem().string() + "_" + file.path().stem().string());
+                    }
+                } else if (entry.is_regular_file()) {
+                    load_sound(entry.path(), entry.path().stem().string());
+                }
+            }
+        } catch (const fs::filesystem_error& e) {
+            spdlog::error("load_screen_sounds: error scanning global sounds: {}", e.what());
+        }
     }
 }
 
@@ -938,4 +974,4 @@ void AudioEngine::seek_music_stream(const std::string& name, float position) {
     lock.unlock();
 }
 
-#endif  // AUDIO_BACKEND_RAYLIB
+AudioEngine audio;

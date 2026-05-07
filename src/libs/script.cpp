@@ -43,6 +43,7 @@ std::string ScriptManager::get_lua_script_path(const std::string& script_name) {
 }
 
 void ScriptManager::shutdown() {
+    script_manager.tex.unload_textures();
     lua.reset();
 }
 

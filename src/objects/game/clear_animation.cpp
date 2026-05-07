@@ -1,6 +1,6 @@
 #include "clear_animation.h"
 #include "../../libs/texture.h"
-#include "../../libs/audio_engine.h"
+#include "../../libs/audio.h"
 
 ClearAnimation::ClearAnimation(bool is_2p)
     : is_2p(is_2p), draw_clear_full(false), name("in"), frame(0) {
@@ -28,7 +28,7 @@ ClearAnimation::ClearAnimation(bool is_2p)
     clear_highlight_fade_in = (FadeAnimation*)tex.get_animation(56);
     clear_highlight_fade_in->start();
 
-    audio->play_sound("clear", "sound");
+    audio.play_sound("clear", "sound");
 }
 
 void ClearAnimation::update(double current_ms) {

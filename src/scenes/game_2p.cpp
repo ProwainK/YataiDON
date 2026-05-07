@@ -29,7 +29,7 @@ void Game2PScreen::init_tja(fs::path song) {
     global_data.session_data[(int)PlayerNum::P2].song_subtitle = subtitle;
 
     if (fs::exists(parser->metadata.wave) && !song_music.has_value()) {
-        song_music = audio->load_sound(parser->metadata.wave, "song");
+        song_music = audio.load_sound(parser->metadata.wave, "song");
     }
 
     players.push_back(std::make_unique<Player>(
@@ -69,7 +69,7 @@ std::optional<Screens> Game2PScreen::update() {
     song_info.update(current_time);
     result_transition.update(current_time);
 
-    if (result_transition.is_finished && !audio->is_sound_playing("result_transition")) {
+    if (result_transition.is_finished && !audio.is_sound_playing("result_transition")) {
         return on_screen_end(Screens::RESULT_2P);
     }
     else if (ms_from_start >= players[0]->end_time) {
@@ -85,21 +85,21 @@ std::optional<Screens> Game2PScreen::update() {
         if (ms_from_start >= players[0]->end_time + 8533.34) {
             if (!result_transition.is_started) {
                 result_transition.start();
-                audio->play_sound("result_transition", "voice");
+                audio.play_sound("result_transition", "voice");
             }
         }
     }
 
     if (ray::IsKeyPressed(global_data.config->keys.restart_key)) {
-        if (song_music.has_value()) audio->stop_sound(song_music.value());
+        if (song_music.has_value()) audio.stop_sound(song_music.value());
         players.clear();
         parser_2p.reset();
         init_tja(global_data.session_data[(int)PlayerNum::P1].selected_song);
-        audio->play_sound("restart", "sound");
+        audio.play_sound("restart", "sound");
         song_started = false;
     }
     if (ray::IsKeyPressed(global_data.config->keys.back_key)) {
-        if (song_music.has_value()) audio->stop_sound(song_music.value());
+        if (song_music.has_value()) audio.stop_sound(song_music.value());
         return on_screen_end(Screens::SONG_SELECT_2P);
     }
     if (ray::IsKeyPressed(global_data.config->keys.pause_key)) {

@@ -1,9 +1,7 @@
 #include "video.h"
-#include "audio_engine.h"
+#include "audio.h"
 #include "texture.h"
 #include <spdlog/spdlog.h>
-
-#ifndef __EMSCRIPTEN__
 
 VideoPlayer::VideoPlayer(fs::path path)
     : is_finished_arr{false, false}
@@ -26,7 +24,7 @@ VideoPlayer::VideoPlayer(fs::path path)
     video_stream = container->streams().video(0);
     audio_stream = container->streams().audio(0);
 
-    audio_s = audio->load_music_stream_memory(*audio_stream, "video_player");
+    audio_s = audio.load_music_stream_memory(*audio_stream, "video_player");
 
     fps = video_stream->average_rate().value_or(0.f);
 
@@ -55,12 +53,12 @@ void VideoPlayer::audio_manager() {
     if (is_finished_arr[1]) return;
 
     if (!audio_started) {
-        audio->play_music_stream(audio_s);
+        audio.play_music_stream(audio_s);
         audio_started = true;
     }
 
     is_finished_arr[1] =
-        audio->get_music_time_played(audio_s) >= audio->get_music_time_length(audio_s);
+        audio.get_music_time_played(audio_s) >= audio.get_music_time_length(audio_s);
 }
 
 void VideoPlayer::init_frame_generator() {
@@ -144,7 +142,7 @@ bool VideoPlayer::is_finished() const {
 
 void VideoPlayer::set_volume(float volume) {
     if (is_static || !container) return;
-    audio->set_music_volume(audio_s, volume);
+    audio.set_music_volume(audio_s, volume);
 }
 
 void VideoPlayer::update(double current_ms) {
@@ -237,8 +235,6 @@ void VideoPlayer::stop() {
         texture.reset();
     }
 
-    audio->stop_music_stream(audio_s);
-    audio->unload_music_stream(audio_s);
+    audio.stop_music_stream(audio_s);
+    audio.unload_music_stream(audio_s);
 }
-
-#endif  // __EMSCRIPTEN__

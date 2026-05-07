@@ -7,6 +7,8 @@
 
 namespace fs = std::filesystem;
 
+void set_working_directory_to_executable();
+
 struct SongCacheEntry {
     std::filesystem::file_time_type mtime;
     std::array<std::string, 5> hashes;

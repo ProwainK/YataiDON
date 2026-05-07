@@ -53,7 +53,7 @@ void DanResultGauge::draw(double fade) {
 
 void DanResultScreen::on_screen_start() {
     Screen::on_screen_start();
-    audio->play_sound("bgm", "music");
+    audio.play_sound("bgm", "music");
 
     fade_out   = (FadeAnimation*)tex.get_animation(0);
     page2_fade = (FadeAnimation*)tex.get_animation(1);
@@ -78,7 +78,7 @@ Screens DanResultScreen::on_screen_end(Screens next_screen) {
 
 void DanResultScreen::handle_input() {
     if (is_l_don_pressed(global_data.player_num) || is_r_don_pressed(global_data.player_num)) {
-        audio->play_sound("don", "sound");
+        audio.play_sound("don", "sound");
         if (is_page2)
             fade_out->start();
         else {

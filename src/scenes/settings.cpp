@@ -22,7 +22,7 @@ void SettingsScreen::on_screen_start() {
     coin_overlay   = CoinOverlay();
     allnet_indicator = AllNetIcon();
 
-    audio->play_sound("bgm", "music");
+    audio.play_sound("bgm", "music");
     screen_init = true;
 }
 
@@ -30,16 +30,9 @@ Screens SettingsScreen::on_screen_end(Screens next_screen) {
     save_config(*global_data.config);
     spdlog::info("Settings saved");
 
-#ifndef AUDIO_BACKEND_RAYLIB
-    audio->close_audio_device();
-    audio = std::make_unique<AudioEngine>(
-        global_data.config->audio.device_type,
-        global_data.config->audio.sample_rate,
-        global_data.config->audio.buffer_size,
-        global_data.config->volume
-    );
-    audio->init_audio_device();
-#endif
+    audio.close_audio_device();
+    fs::path sounds_path = fs::path("Skins") / global_data.config->paths.skin / "Sounds";
+    audio.init_audio_device(sounds_path, global_data.config->audio, global_data.config->volume);
 
     box_manager.reset();
 
@@ -54,13 +47,13 @@ std::optional<Screens> SettingsScreen::handle_input() {
         return on_screen_end(Screens::SKIN_VIEWER);
     }
     if (is_l_kat_pressed()) {
-        audio->play_sound("kat", "sound");
+        audio.play_sound("kat", "sound");
         box_manager->move_left();
     } else if (is_r_kat_pressed()) {
-        audio->play_sound("kat", "sound");
+        audio.play_sound("kat", "sound");
         box_manager->move_right();
     } else if (is_l_don_pressed() || is_r_don_pressed()) {
-        audio->play_sound("don", "sound");
+        audio.play_sound("don", "sound");
         bool result = box_manager->select_box();
         if (result) {
             return on_screen_end(Screens::ENTRY);

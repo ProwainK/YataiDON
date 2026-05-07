@@ -5,7 +5,6 @@
 #include <windows.h>
 #endif
 
-#ifndef __EMSCRIPTEN__
 #include <SDL3/SDL.h>
 std::atomic<bool> input_thread_running{true};
 std::thread input_thread;
@@ -52,7 +51,7 @@ static void refresh_sdl_joysticks() {
 
     SDL_free(ids);
 }
-#endif
+
 std::mutex input_mutex;
 std::vector<int> pressed_keys;
 std::vector<int> released_keys;
@@ -255,7 +254,6 @@ void poll_keyboard_once() {
 
     }
 
-#ifndef __EMSCRIPTEN__
     refresh_sdl_joysticks();
     constexpr float JOYSTICK_AXIS_THRESHOLD = 0.5f;
 
@@ -290,7 +288,6 @@ void poll_keyboard_once() {
             sdl_prev_axis[state_key] = value;
         }
     }
-#endif
 
     if (!local_pressed.empty() || !local_released.empty()) {
         std::lock_guard<std::mutex> lock(input_mutex);
@@ -299,14 +296,12 @@ void poll_keyboard_once() {
     }
 }
 
-#ifndef __EMSCRIPTEN__
 void input_polling_thread() {
     while (input_thread_running) {
         poll_keyboard_once();
         std::this_thread::sleep_for(std::chrono::microseconds(500));
     }
 }
-#endif
 
 bool check_key_pressed(int key) {
     std::lock_guard<std::mutex> lock(input_mutex);
@@ -334,11 +329,9 @@ void clear_input_buffers() {
     released_keys.clear();
 }
 
-#ifndef __EMSCRIPTEN__
 void shutdown_sdl_joysticks() {
     for (auto& [id, joy] : sdl_joysticks) {
         SDL_CloseJoystick(joy);
     }
     sdl_joysticks.clear();
 }
-#endif

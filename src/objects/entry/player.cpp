@@ -114,15 +114,15 @@ void EntryPlayer::handle_input() {
     if (box_manager->is_box_selected()) return;
 
     if (is_l_don_pressed(player_num) || is_r_don_pressed(player_num)) {
-        audio->play_sound("don", "sound");
+        audio.play_sound("don", "sound");
         box_manager->select_box();
     }
     if (is_l_kat_pressed(player_num)) {
-        audio->play_sound("kat", "sound");
+        audio.play_sound("kat", "sound");
         box_manager->move_left();
     }
     if (is_r_kat_pressed(player_num)) {
-        audio->play_sound("kat", "sound");
+        audio.play_sound("kat", "sound");
         box_manager->move_right();
     }
 }
