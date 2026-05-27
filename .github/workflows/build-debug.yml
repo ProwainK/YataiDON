@@ -54,6 +54,7 @@ jobs:
             libmp3lame-dev \
             libmpg123-dev \
             libspeex-dev \
+            libdw-dev \
             libwayland-dev \
             libegl-dev \
             libxkbcommon-dev \

@@ -50,7 +50,8 @@ jobs:
             libopus-dev \
             libmp3lame-dev \
             libmpg123-dev \
-            libspeex-dev
+            libspeex-dev \
+            libdw-dev
 
       - name: Setup SDL3
         id: sdl
