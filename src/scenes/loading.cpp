@@ -66,6 +66,7 @@ void LoadingScreen::load_song_hashes() {
         }
     };
 
+    scores_manager.begin_transaction();
     int chunk = songs.size() / thread_count;
     for (int i = 0; i < thread_count; i++) {
         int start = i * chunk;
@@ -73,6 +74,7 @@ void LoadingScreen::load_song_hashes() {
         threads.emplace_back(worker, start, end);
     }
     for (auto& t : threads) t.join();
+    scores_manager.commit();
 
     if (fs::exists(fs::path("scores_pytaiko.db"))) {
         scores_manager.py_taiko_import(fs::path("scores_pytaiko.db"));
