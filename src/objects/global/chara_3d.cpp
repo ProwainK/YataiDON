@@ -118,6 +118,12 @@ Chara3D::Chara3D(std::string& model_name, bool mirror) {
     fxaa_shader   = ray::LoadShader("shader/dummy.vs", "shader/fxaa.fs");
     fxaa_size_loc = ray::GetShaderLocation(fxaa_shader, "textureSize");
 
+    outline_pass_shader = ray::LoadShader("shader/dummy.vs", "shader/outline_pass.fs");
+    outline_pass_size_loc = ray::GetShaderLocation(outline_pass_shader, "textureSize");
+    outline_pass_thickness_loc = ray::GetShaderLocation(outline_pass_shader, "outlineThickness");
+    float outline_thickness = 3.0f;
+    ray::SetShaderValue(outline_pass_shader, outline_pass_thickness_loc, &outline_thickness, ray::SHADER_UNIFORM_FLOAT);
+
     outline_shader = ray::LoadShader("shader/outline.vs", "shader/outline.fs");
     int thickness_loc = ray::GetShaderLocation(outline_shader, "outlineThickness");
     float thickness = 0.0035f;
@@ -174,7 +180,9 @@ Chara3D::~Chara3D() {
     ray::UnloadModelAnimations(anims, anim_count);
     ray::UnloadModel(cos_model);
     ray::UnloadShader(fxaa_shader);
+    ray::UnloadShader(outline_pass_shader);
     if (fxaa_target.id != 0) ray::UnloadRenderTexture(fxaa_target);
+    if (scene_target.id != 0) ray::UnloadRenderTexture(scene_target);
     ray::UnloadShader(outline_shader);
     for (auto& tex : face_textures)
         ray::UnloadTexture(tex);
@@ -417,6 +425,15 @@ void Chara3D::draw(float x, float y) {
     int rw = ray::GetRenderWidth();
     int rh = ray::GetRenderHeight();
 
+    if (scene_target.id == 0 || scene_target_w != rw || scene_target_h != rh) {
+        if (scene_target.id != 0) ray::UnloadRenderTexture(scene_target);
+        scene_target   = ray::LoadRenderTexture(rw, rh);
+        scene_target_w = rw;
+        scene_target_h = rh;
+        float ts[2] = {(float)rw, (float)rh};
+        ray::SetShaderValue(outline_pass_shader, outline_pass_size_loc, ts, ray::SHADER_UNIFORM_VEC2);
+    }
+
     if (fxaa_target.id == 0 || fxaa_target_w != rw || fxaa_target_h != rh) {
         if (fxaa_target.id != 0) ray::UnloadRenderTexture(fxaa_target);
         fxaa_target   = ray::LoadRenderTexture(rw, rh);
@@ -432,7 +449,7 @@ void Chara3D::draw(float x, float y) {
     ray::EndMode2D();
     ray::EndBlendMode();
 
-    ray::BeginTextureMode(fxaa_target);
+    ray::BeginTextureMode(scene_target);
     ray::ClearBackground(ray::BLANK);
     ray::BeginBlendMode(ray::BLEND_CUSTOM_SEPARATE);
     ray::BeginMode3D(cam3d);
@@ -440,6 +457,15 @@ void Chara3D::draw(float x, float y) {
     draw_3d(x, y);
     ray::EndMode3D();
     ray::EndBlendMode();
+    ray::EndTextureMode();
+
+    ray::BeginTextureMode(fxaa_target);
+    ray::ClearBackground(ray::BLANK);
+    ray::BeginShaderMode(outline_pass_shader);
+    ray::DrawTextureRec(scene_target.texture,
+        {0, 0, (float)rw, -(float)rh},
+        {0, 0}, ray::WHITE);
+    ray::EndShaderMode();
     ray::EndTextureMode();
 
     ray::BeginShaderMode(fxaa_shader);
