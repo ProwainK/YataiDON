@@ -24,6 +24,7 @@ NeiroSelector::NeiroSelector(PlayerNum player_num, PlayerData* player) : player_
         }
     }
     sounds.push_back("無音");
+    if (selected_sound == -1) selected_sound = (int)sounds.size() - 1;
     selected_sound = std::clamp(selected_sound, 0, (int)sounds.size() - 1);
     load_sound();
     audio.play_sound("voice_hitsound_select_" + std::to_string((int)player_num) + "p", VolumePreset::VOICE);
