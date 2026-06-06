@@ -57,6 +57,13 @@ std::mutex input_mutex;
 std::vector<int> pressed_keys;
 std::vector<int> released_keys;
 
+static const int TOUCH_L_KAT = 40001;
+static const int TOUCH_R_KAT = 40002;
+static const int TOUCH_L_DON = 40003;
+static const int TOUCH_R_DON = 40004;
+
+static std::unordered_map<int, int> touch_id_to_vkey;
+
 static std::array<bool, 349> previous_key_states{};
 static std::array<bool, 18>  previous_gamepad_states{};
 
@@ -94,7 +101,10 @@ bool is_l_don_pressed(PlayerNum player_num) {
     } else {
         return false;
     }
-    return is_input_key_pressed(keys, gamepad_buttons);
+    if (is_input_key_pressed(keys, gamepad_buttons)) return true;
+    if (player_num == PlayerNum::ALL || player_num == PlayerNum::P1)
+        return check_key_pressed(TOUCH_L_DON);
+    return false;
 }
 
 bool is_r_don_pressed(PlayerNum player_num) {
@@ -116,7 +126,10 @@ bool is_r_don_pressed(PlayerNum player_num) {
     } else {
         return false;
     }
-    return is_input_key_pressed(keys, gamepad_buttons);
+    if (is_input_key_pressed(keys, gamepad_buttons)) return true;
+    if (player_num == PlayerNum::ALL || player_num == PlayerNum::P1)
+        return check_key_pressed(TOUCH_R_DON);
+    return false;
 }
 
 bool is_l_kat_pressed(PlayerNum player_num) {
@@ -138,7 +151,10 @@ bool is_l_kat_pressed(PlayerNum player_num) {
     } else {
         return false;
     }
-    return is_input_key_pressed(keys, gamepad_buttons);
+    if (is_input_key_pressed(keys, gamepad_buttons)) return true;
+    if (player_num == PlayerNum::ALL || player_num == PlayerNum::P1)
+        return check_key_pressed(TOUCH_L_KAT);
+    return false;
 }
 
 bool is_r_kat_pressed(PlayerNum player_num) {
@@ -160,7 +176,10 @@ bool is_r_kat_pressed(PlayerNum player_num) {
     } else {
         return false;
     }
-    return is_input_key_pressed(keys, gamepad_buttons);
+    if (is_input_key_pressed(keys, gamepad_buttons)) return true;
+    if (player_num == PlayerNum::ALL || player_num == PlayerNum::P1)
+        return check_key_pressed(TOUCH_R_KAT);
+    return false;
 }
 
 #ifdef _WIN32
@@ -230,6 +249,74 @@ bool is_key_down_native(int raylib_key) {
     return (GetAsyncKeyState(vk_code) & 0x8000) != 0;
 }
 #endif
+
+// Drum is a circle centered at bottom-center of the 1280x720 overlay image.
+// Center ≈ (640, 720), radius ≈ 340px → radius_frac = 340/1280 ≈ 0.266 of screen width.
+static int touch_quadrant_vkey(ray::Vector2 pos, int sw, int sh) {
+    bool left = pos.x < sw / 2.0f;
+    bool top  = pos.y < sh / 2.0f;
+    if (top) return left ? TOUCH_L_KAT : TOUCH_R_KAT;
+
+    float cx = sw * 0.5f;
+    float cy = (float)sh;
+    float r  = sw * 0.266f;
+    float dx = pos.x - cx;
+    float dy = pos.y - cy;
+    bool in_drum = (dx * dx + dy * dy) <= r * r;
+    if (in_drum) return left ? TOUCH_L_DON : TOUCH_R_DON;
+    return left ? TOUCH_L_KAT : TOUCH_R_KAT;
+}
+
+void poll_touch_once() {
+    if (global_data.input_locked) return;
+
+    int sw = ray::GetScreenWidth();
+    int sh = ray::GetScreenHeight();
+    std::unordered_set<int> current_ids;
+    std::vector<int> local_pressed;
+    std::vector<int> local_released;
+
+    // Snapshot before update: used to guard gesture fallback against double-firing
+    bool had_active_touch = !touch_id_to_vkey.empty();
+
+    int touch_count = ray::GetTouchPointCount();
+    for (int i = 0; i < touch_count; i++) {
+        int id = ray::GetTouchPointId(i);
+        current_ids.insert(id);
+
+        if (!touch_id_to_vkey.count(id)) {
+            ray::Vector2 pos = ray::GetTouchPosition(i);
+            int vkey = touch_quadrant_vkey(pos, sw, sh);
+            touch_id_to_vkey[id] = vkey;
+            local_pressed.push_back(vkey);
+        }
+    }
+
+    for (auto it = touch_id_to_vkey.begin(); it != touch_id_to_vkey.end();) {
+        if (!current_ids.count(it->first)) {
+            local_released.push_back(it->second);
+            it = touch_id_to_vkey.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
+    // Fallback: catch quick taps that start+end within one frame (invisible to point tracking).
+    // Guard: skip if we had an active touch last frame — that means the gesture belongs
+    // to a slow tap we already caught via ID tracking, and firing again would double-press.
+    if (!had_active_touch && local_pressed.empty()) {
+        if (ray::IsGestureDetected(ray::GESTURE_TAP) || ray::IsGestureDetected(ray::GESTURE_DOUBLETAP)) {
+            ray::Vector2 pos = ray::GetTouchPosition(0);
+            local_pressed.push_back(touch_quadrant_vkey(pos, sw, sh));
+        }
+    }
+
+    if (!local_pressed.empty() || !local_released.empty()) {
+        std::lock_guard<std::mutex> lock(input_mutex);
+        pressed_keys.insert(pressed_keys.end(), local_pressed.begin(), local_pressed.end());
+        released_keys.insert(released_keys.end(), local_released.begin(), local_released.end());
+    }
+}
 
 // Scan all keyboard keys once and push press/release events.
 // Used by the polling thread on desktop and called directly per-frame on web.

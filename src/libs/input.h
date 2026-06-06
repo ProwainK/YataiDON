@@ -11,6 +11,7 @@ extern std::vector<int> released_keys;
 
 void input_polling_thread();
 void poll_keyboard_once();
+void poll_touch_once();
 
 // Check if a key was pressed since the last check
 // This consumes the key press event

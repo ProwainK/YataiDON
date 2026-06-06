@@ -24,6 +24,7 @@ struct GeneralConfig {
     int webcam_number;
     int player_1_id;
     int player_2_id;
+    bool touch_input;
 };
 
 

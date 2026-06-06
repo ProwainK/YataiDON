@@ -153,6 +153,8 @@ static void run_frame() {
     LoopState& L = *g_loop;
 
     ray::PollInputEvents();
+    if (global_data.config->general.touch_input)
+        poll_touch_once();
 
     auto frame_start = std::chrono::steady_clock::now();
 
@@ -189,6 +191,10 @@ static void run_frame() {
         clear_input_buffers();
         L.current_screen = next_screen.value();
         global_data.input_locked = 0;
+    }
+
+    if (global_data.config->general.touch_input) {
+        global_tex.draw_texture(OVERLAY::TOUCH_DRUM, {.fade = 0.5f});
     }
 
     if (global_data.config->general.fps_counter) {

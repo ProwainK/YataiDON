@@ -217,6 +217,7 @@ Config get_config() {
         config.general.webcam_number = (*general)["webcam_number"].value_or(-1);
         config.general.player_1_id = (*general)["player_1_id"].value_or(1);
         config.general.player_2_id = (*general)["player_2_id"].value_or(1);
+        config.general.touch_input = (*general)["touch_input"].value_or(false);
     }
 
     // Parse paths
