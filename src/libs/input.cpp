@@ -65,6 +65,8 @@ static const int TOUCH_R_DON = 40004;
 
 static std::unordered_map<SDL_FingerID, int> touch_id_to_vkey;
 
+std::atomic<bool> touch_drum_pressed{false};
+
 static std::array<bool, 349> previous_key_states{};
 static std::array<bool, 18>  previous_gamepad_states{};
 
@@ -294,6 +296,7 @@ static bool SDLCALL touch_event_watch(void* /*userdata*/, SDL_Event* event) {
             ray::Vector2 pos = { event->tfinger.x * sw, event->tfinger.y * sh };
             int vkey = touch_quadrant_vkey(pos, sw, sh);
             touch_id_to_vkey[id] = vkey;
+            touch_drum_pressed.store(true, std::memory_order_relaxed);
             std::lock_guard<std::mutex> lock(input_mutex);
             pressed_keys.push_back(vkey);
         }
