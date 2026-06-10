@@ -1,0 +1,97 @@
+name: Build YataiDON (Windows)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    name: Build on Windows
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+      - name: Configure Git credentials
+        shell: bash
+        run: |
+          git config --global url."https://${{ secrets.GITEA_USER }}:${{ secrets.GITEA_TOKEN }}@ese.tjadataba.se/".insteadOf "https://ese.tjadataba.se/"
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-pkg-config
+            mingw-w64-x86_64-libsndfile
+            mingw-w64-x86_64-libsamplerate
+            mingw-w64-x86_64-lua
+            mingw-w64-x86_64-ffmpeg
+            mingw-w64-x86_64-sdl3
+            make
+
+      - name: Configure CMake
+        run: |
+          cmake -B build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_COMPILER=g++ \
+            -DCMAKE_C_COMPILER=gcc
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Prepare release package
+        shell: bash
+        run: |
+          mkdir -p release/YataiDON-Windows
+          cp build/bin/YataiDON.exe release/YataiDON-Windows/
+          cp build/bin/*.dll release/YataiDON-Windows/ 2>/dev/null || true
+          cp -r Skins release/YataiDON-Windows/
+          cp -r shader release/YataiDON-Windows/
+          cp -r Songs release/YataiDON-Windows/
+          cp config.toml release/YataiDON-Windows/
+          cp update.ps1 update.bat release/YataiDON-Windows/
+
+          # Checksums — binary + updater + dlls + shader
+          (
+            cd release/YataiDON-Windows
+            sha256sum YataiDON.exe update.ps1 update.bat
+            find shader -type f | sort | xargs sha256sum
+            find . -maxdepth 1 -name "*.dll" | sort | xargs sha256sum
+          ) > release/YataiDON-Windows/checksums-windows.sha256
+
+      - name: Upload Windows package
+        uses: actions/upload-artifact@v4
+        with:
+          name: YataiDON-Windows
+          path: release/YataiDON-Windows/
+          if-no-files-found: error
+
+  build-summary-windows:
+    name: Build Summary
+    runs-on: ubuntu-latest
+    needs: [build-windows]
+    if: always()
+
+    steps:
+      - name: Check build status
+        run: |
+          echo "Windows build: ${{ needs.build-windows.result }}"
+
+          if [[ "${{ needs.build-windows.result }}" != "success" ]]; then
+            echo "Windows build failed!"
+            exit 1
+          fi
+
+          echo "Windows build completed successfully!"
