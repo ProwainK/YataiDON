@@ -839,6 +839,7 @@ void Player::play_note_manager(double current_ms, std::optional<Background>& bac
             curr_balloon_count = 0;
             return;
         }
+        if (other_notes.size() < 2) return;
         Note& tail = other_notes[1];
         if (tail.hit_ms <= current_ms) {
             other_notes.pop_front();
@@ -1064,7 +1065,20 @@ void Player::check_note(double ms_from_start, DrumType drum_type, double current
         check_drumroll(current_ms, drum_type, background);
         return;
     } else if (is_balloon && !other_notes.empty()) {
-        curr_note = other_notes.front();
+
+        // curr_note = other_notes.front();
+        // ---
+        if (other_notes.empty()) return;
+
+        Note& curr_note = other_notes.front();
+
+        if (curr_note.type != NoteType::BALLOON_HEAD &&
+            curr_note.type != NoteType::KUSUDAMA)
+            return;
+
+        if (!curr_note.count.has_value()) return;
+        // ---
+
         if (curr_note.type == NoteType::BALLOON_HEAD) {
             check_balloon(current_ms, drum_type, curr_note, background);
         }
