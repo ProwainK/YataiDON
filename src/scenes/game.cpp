@@ -83,6 +83,7 @@ Screens GameScreen::on_screen_end(Screens next_screen) {
 
     if (movie.has_value()) {
         movie->stop();
+        movie.reset();
         spdlog::info("Movie stopped");
     }
     if (background.has_value()) {
