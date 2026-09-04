@@ -1,0 +1,947 @@
+{
+  "screen": {
+    "width": 1280,
+    "height": 720,
+    "options": {
+      "delay_score_addition": true,
+      "horizontal_song_select": false,
+      "one_menu_sort": false,
+      "option_skip_row": false,
+      "option_neiro_row": false,
+      "dan_result_rank_plate": false,
+      "dan_game_rank_plate": false,
+      "dan_select_rank_plate": false,
+      "entry_credit_arcade": false,
+      "dan_confirm_yes_left": false,
+      "songselect_2p_join": false,
+      "costume_preset_slots": false,
+      "dan_title_horizontal": false,
+      "dan_chip_name_black": false,
+      "dan_exam_grid": false,
+      "dan_select_total_notes": true
+    },
+    "chara_3d": {
+    "scale": 650.0,
+    "rot_x": 181.25,
+    "rot_y": 27.5,
+    "rot_z": 0
+    }
+  },
+  "free_play": {
+    "x": 560,
+    "y": 672,
+    "font_size": 26,
+    "text": {
+      "ja": "フリープレイ",
+      "en": "FREE PLAY",
+      "zh": "自由游戏"
+    }
+  },
+  "hit_taiko_to_start": {
+    "x": 200,
+    "y": 672,
+    "width": 800,
+    "font_size": 26,
+    "text": {
+      "ja": "太鼓をたたいてスタート！",
+      "en": "HIT THE TAIKO!",
+      "zh": "敲打太鼓开始！"
+    }
+  },
+  "indicator_text": {
+    "x": 113,
+    "font_size": 26,
+    "text": {
+      "ja": "フチでえらんで       面で決定",
+      "en": "Navigate           Decide",
+      "zh": "敲打鼓边选择        敲打鼓面"
+    }
+  },
+  "song_num": {
+    "x": 1110,
+    "y": 28,
+    "font_size": 40,
+    "text": {
+      "ja": "{0}曲目",
+      "en": "Song {0}",
+      "zh": "{0}曲目"
+    }
+  },
+  "song_num_result": {
+    "x": 232,
+    "y": 15
+  },
+  "entry_game": {
+    "text": {
+      "en": "Game",
+      "ja": "演奏ゲーム",
+      "zh": "节奏游戏"
+    }
+  },
+  "entry_practice": {
+    "text": {
+      "en": "Practice",
+      "ja": "特訓モード",
+      "zh": "练习游戏"
+    }
+  },
+  "entry_settings": {
+    "text": {
+      "en": "Settings",
+      "ja": "ゲーム設定",
+      "zh": "游戏設定"
+    }
+  },
+  "entry_ai_battle": {
+    "text": {
+      "en": "AI Battle",
+      "ja": "AIバトル",
+      "zh": "AI斗争"
+    }
+  },
+  "entry_costume": {
+    "text": {
+      "en": "Costume",
+      "ja": "きせかえ",
+      "zh": "装扮"
+    }
+  },
+  "entry_costume_menu_1p": {
+    "x": 0,
+    "y": 100
+  },
+  "entry_costume_menu_2p": {
+    "x": 750,
+    "y": 100
+  },
+  "entry_costume_text": {
+    "x": 0,
+    "y": 30,
+    "font_size": 33,
+    "text": {
+      "en": "Choose a Costume",
+      "ja": "きせかえをえらべるよ",
+      "zh": "选择装扮"
+    }
+  },
+  "entry_cancel": {
+    "x": 0,
+    "y": 0,
+    "font_size": 33,
+    "text": {
+      "en": "Cancel",
+      "ja": "つかわない",
+      "zh": "取消"
+    }
+  },
+  "entry_question": {
+    "x": 636,
+    "y": 143,
+    "font_size": 33,
+    "text": {
+      "en": "Play as this user?",
+      "ja": "どちらでつかいますか?",
+      "zh": "你打算用它来做什么？"
+    }
+  },
+  "modifier_name_auto": {
+    "text": {
+      "en": "Auto",
+      "ja": "オート",
+      "zh": "自动播放"
+    }
+  },
+  "modifier_name_speed": {
+    "text": {
+      "en": "Speed",
+      "ja": "はやさ",
+      "zh": "速度"
+    }
+  },
+  "modifier_name_display": {
+    "text": {
+      "en": "Display",
+      "ja": "ドロン",
+      "zh": "隐身"
+    }
+  },
+  "modifier_name_inverse": {
+    "text": {
+      "en": "Inverse",
+      "ja": "あべこべ",
+      "zh": "顛倒"
+    }
+  },
+  "modifier_name_random": {
+    "text": {
+      "en": "Random",
+      "ja": "ランダム",
+      "zh": "随机"
+    }
+  },
+  "modifier_name_skip": {
+    "text": {
+      "en": "Skip Song",
+      "ja": "演奏スキップ",
+      "zh": "跳略演奏"
+    }
+  },
+  "modifier_name_neiro": {
+    "text": {
+      "en": "Sound",
+      "ja": "音色",
+      "zh": "音色"
+    }
+  },
+  "modifier_text_true": {
+    "text": {
+      "en": "On",
+      "ja": "する",
+      "zh": "是"
+    }
+  },
+  "modifier_text_false": {
+    "text": {
+      "en": "Off",
+      "ja": "しない",
+      "zh": "否"
+    }
+  },
+  "modifier_text_kimagure": {
+    "text": {
+      "en": "Kimagure",
+      "ja": "きまぐれ",
+      "zh": "隨意"
+    }
+  },
+  "modifier_text_detarame": {
+    "text": {
+      "en": "Detarame",
+      "ja": "でたらめ",
+      "zh": "即興"
+    }
+  },
+  "nameplate_text_padding": {
+    "x": 25
+  },
+  "nameplate_title_offset": {
+    "y": 2
+  },
+  "nameplate_name_offset": {
+    "y": -2
+  },
+  "nameplate_text_name": {
+    "x": 136,
+    "y": 24,
+    "width": 255,
+    "font_size": 22
+  },
+  "nameplate_text_title": {
+    "x": 136,
+    "y": -3,
+    "width": 255,
+    "font_size": 20
+  },
+  "indicator_face_offset": {
+    "x": 175
+  },
+  "indicator_kat_offset": {
+    "x": 23
+  },
+  "indicator_don_offset": {
+    "x": 214
+  },
+  "timer_text_margin": {
+    "x": 40
+  },
+  "entry_overlay_title": {
+    "x": 155,
+    "y": -10
+  },
+  "entry_overlay_entry": {
+    "x": 0,
+    "y": -10
+  },
+  "chara_entry": {
+    "x": 640,
+    "y": 455
+  },
+  "nameplate_entry": {
+    "x": 500,
+    "y": 185
+  },
+  "nameplate_entry_left": {
+    "x": 30,
+    "y": 640
+  },
+  "nameplate_entry_right": {
+    "x": 950,
+    "y": 640
+  },
+  "indicator_entry_left": {
+    "x": 50,
+    "y": 575
+  },
+  "indicator_entry_right": {
+    "x": 770,
+    "y": 575
+  },
+  "entry_drum_offset": {
+    "x": 0,
+    "y": 620
+  },
+  "entry_chara_offset_l": {
+    "x": 330,
+    "y": 780
+  },
+  "entry_chara_offset_r": {
+    "x": 330,
+    "y": 780
+  },
+  "entry_box_text_offset": {
+    "y": 20
+  },
+  "entry_box_highlight_offset": {
+    "x": -15
+  },
+  "entry_box_text": {
+    "font_size": 50
+  },
+  "entry_box_spacing": {
+    "x": 80
+  },
+  "song_box_name": {
+    "x": 47,
+    "y": 129,
+    "height": 417,
+    "font_size": 40
+  },
+  "song_box_bg": {
+    "width": 32
+  },
+  "song_folder_top": {
+    "x": 268
+  },
+  "song_hori_name": {
+    "x": 642,
+    "y": 204,
+    "width": 300,
+    "font_size": 40
+  },
+  "song_tja_count": {
+    "x": 560,
+    "y": 130,
+    "width": 118,
+    "font_size": 35
+  },
+  "box_texture": {
+    "x": 48,
+    "y": 330
+  },
+  "yb_diff_offset": {
+    "x": 60,
+    "y": -17
+  },
+  "yb_diff_offset_diff_select": {
+    "x": 115,
+    "y": -120
+  },
+  "yb_diff_offset_crown": {
+    "x": 8,
+    "y": -20
+  },
+  "yb_subtitle": {
+    "x": -15,
+    "y": 545,
+    "height": 410,
+    "font_size": 30
+  },
+  "song_select_indicator": {
+    "x": 410,
+    "y": 575
+  },
+  "song_select_chara_1p": {
+    "x": 110,
+    "y": 610
+  },
+  "song_select_chara_2p": {
+    "x": 1160,
+    "y": 610
+  },
+  "song_select_nameplate_1p": {
+    "x": 30,
+    "y": 640
+  },
+  "song_select_nameplate_2p": {
+    "x": 950,
+    "y": 640
+  },
+  "song_select_offset": {
+    "x": -370
+  },
+  "selector_offset": {
+    "x": 115
+  },
+  "selector_balloon_offset_1": {
+    "x": -220
+  },
+  "selector_balloon_offset_2": {
+    "x": 70
+  },
+  "transition_title": {
+    "y": 1156,
+    "font_size": 40
+  },
+  "transition_subtitle": {
+    "y": 1206,
+    "font_size": 30
+  },
+  "transition_offset": {
+    "y": 816
+  },
+  "transition_chara_offset": {
+    "y": 408
+  },
+  "dan_title": {
+    "x": 665,
+    "y": 127,
+    "height": 400,
+    "font_size": 40
+  },
+  "dan_subtitle": {
+    "x": 620,
+    "y": 525,
+    "height": 400,
+    "font_size": 30
+  },
+  "total_notes_counter_margin": {
+    "x": 25
+  },
+  "exam_gauge_offset": {
+    "x": -8
+  },
+  "exam_counter_margin": {
+    "x": 20
+  },
+  "dan_yellow_box_offset": {
+    "x": 140
+  },
+  "dan_level_counter_margin": {
+    "x": 10
+  },
+  "dan_hori_name": {
+    "x": 434,
+    "y": 84,
+    "width": 275
+  },
+  "genre_bg_title": {
+    "y": 44,
+    "width": 300
+  },
+  "score_info_bg_offset": {
+    "y": 50
+  },
+  "score_info_counter_margin": {
+    "x": 24,
+    "width": 14
+  },
+  "dan_result_info_height": {
+    "y": 191
+  },
+  "dan_result_song_name": {
+    "x": 1230,
+    "y": 90
+  },
+  "dan_result_diff_num_margin": {
+    "x": 12
+  },
+  "dan_result_hori_name": {
+    "x": 276,
+    "y": 123,
+    "width": 275
+  },
+  "dan_game_hori_name": {
+    "x": 154,
+    "y": 392,
+    "width": 275
+  },
+  "dan_score_box_margin": {
+    "x": 22
+  },
+  "dan_total_notes_margin": {
+    "x": 45
+  },
+  "dan_exam_info": {
+    "width": 940,
+    "x": 22,
+    "y": 94
+  },
+  "dan_select_indicator": {
+    "x": 410,
+    "y": 575
+  },
+  "notes": {
+    "y": 8
+  },
+  "moji": {
+    "x": 148,
+    "y": 139
+  },
+  "practice_progress_bar_width": {
+    "width": 890
+  },
+  "practice_menu_end_game": {
+    "text": {
+      "ja": "ゲーム終了",
+      "zh": "結束遊戲",
+      "en": "End Game"
+    }
+  },
+  "practice_menu_another_song": {
+    "text": {
+      "ja": "ほかの曲を演奏",
+      "zh": "選其他歌曲",
+      "en": "Another Song"
+    }
+  },
+  "practice_menu_restart": {
+    "text": {
+      "ja": "最初から演奏",
+      "zh": "從頭演奏",
+      "en": "From the Top"
+    }
+  },
+  "practice_menu_auto_play": {
+    "text": {
+      "ja": "オート演奏設定",
+      "zh": "自動演奏設定",
+      "en": "Auto Play"
+    }
+  },
+  "practice_menu_jump_to_mark": {
+    "text": {
+      "ja": "ジャンプポイントへ",
+      "zh": "跳至跳轉點",
+      "en": "To Jump Point"
+    }
+  },
+  "practice_menu_set_mark": {
+    "text": {
+      "ja": "ジャンプポイント設定",
+      "zh": "設定跳轉點",
+      "en": "Set Jump Point"
+    }
+  },
+  "practice_menu_close": {
+    "text": {
+      "ja": "メニューをとじる",
+      "zh": "關閉選單",
+      "en": "Close Menu"
+    }
+  },
+  "practice_menu_confirm_end": {
+    "text": {
+      "ja": "特訓モードを終了しますカッ？",
+      "zh": "要結束特訓模式嗎鏘？",
+      "en": "End practice mode?"
+    }
+  },
+  "practice_menu_confirm_another": {
+    "text": {
+      "ja": "ほかの曲を演奏しますカッ？",
+      "zh": "要選其他歌曲嗎鏘？",
+      "en": "Play another song?"
+    }
+  },
+  "practice_menu_confirm_restart": {
+    "text": {
+      "ja": "最初から演奏しますカッ？",
+      "zh": "要從頭演奏嗎鏘？",
+      "en": "Restart from the top?"
+    }
+  },
+  "practice_menu_confirm_auto": {
+    "text": {
+      "ja": "オート演奏を設定するドン！",
+      "zh": "設定自動演奏咚！",
+      "en": "Set Auto Play!"
+    }
+  },
+  "practice_menu_yes": {
+    "text": {
+      "ja": "はい",
+      "zh": "是",
+      "en": "Yes"
+    }
+  },
+  "practice_menu_no": {
+    "text": {
+      "ja": "いいえ",
+      "zh": "否",
+      "en": "No"
+    }
+  },
+  "practice_menu_auto_on": {
+    "text": {
+      "ja": "ON",
+      "zh": "ON",
+      "en": "ON"
+    }
+  },
+  "practice_menu_auto_off": {
+    "text": {
+      "ja": "OFF",
+      "zh": "OFF",
+      "en": "OFF"
+    }
+  },
+  "practice_menu_panel": {
+    "y": 48,
+    "width": 940,
+    "height": 460
+  },
+  "practice_menu_bar": {
+    "x": 36,
+    "width": 92,
+    "height": 378
+  },
+  "practice_menu_label": {
+    "y": 16,
+    "width": 350
+  },
+  "practice_menu_dialog_title": {
+    "y": 100
+  },
+  "practice_menu_dialog_title_auto": {
+    "y": 56
+  },
+  "practice_menu_dialog_button": {
+    "x": 160,
+    "y": 240,
+    "width": 212,
+    "height": 102
+  },
+  "practice_menu_auto_label": {
+    "y": 150,
+    "width": 290
+  },
+  "practice_menu_auto_toggle": {
+    "x": 40,
+    "y": 280,
+    "width": 240
+  },
+  "moji_drumroll": {
+    "x": 60,
+    "y": 6,
+    "width": 116
+  },
+  "drumroll_width_offset": {
+    "width": -47
+  },
+  "balloon_offset": {
+    "x": 12
+  },
+  "game_nameplate_1p": {
+    "x": -62,
+    "y": 100
+  },
+  "game_nameplate_2p": {
+    "x": -62,
+    "y": 10
+  },
+  "game_2p_offset": {
+    "y": 536
+  },
+  "offset_2p": {
+    "y": 176
+  },
+  "gauge_hit_effect_note": {
+    "x": 1158,
+    "y": -84,
+    "height": 220
+  },
+  "drumroll_counter_margin": {
+    "x": 52
+  },
+  "kusudama_counter_margin": {
+    "x": 150
+  },
+  "combo_margin": {
+    "x": 30,
+    "y": 35
+  },
+  "score_counter_margin": {
+    "x": 20
+  },
+  "song_info": {
+    "x": 1252,
+    "y": 50,
+    "font_size": 40
+  },
+  "song_info_subtitle": {
+    "y": 88,
+    "font_size": 22
+  },
+  "judge_counter_margin": {
+    "x": 23
+  },
+  "judge_counter_1": {
+    "x": 260,
+    "y": 440
+  },
+  "judge_counter_2": {
+    "x": 180,
+    "y": 477
+  },
+  "judge_counter_3": {
+    "x": 270,
+    "y": 477
+  },
+  "judge_counter_4": {
+    "x": 515,
+    "y": 398,
+    "width": 577
+  },
+  "judge_counter_draw_total_notes_good": {
+    "_comment": "260, 360",
+    "x": 260,
+    "y": 360
+  },
+  "judge_counter_draw_total_notes_ok": {
+    "_comment": "353 + 260, 360",
+    "x": 613,
+    "y": 360
+  },
+  "judge_counter_draw_total_notes_bad": {
+    "_comment": "706 + 260, 360",
+    "x": 966,
+    "y": 360
+  },
+  "judge_counter_draw_total_notes_good_and_ok": {
+    "_comment": "-65535, -65535",
+    "x": -65535,
+    "y": -65535
+  },
+  "judge_counter_draw_good": {
+    "_comment": "180, 360",
+    "x": 180,
+    "y": 360
+  },
+  "judge_counter_draw_ok": {
+    "_comment": "353 + 180, 360",
+    "x": 533,
+    "y": 360
+  },
+  "judge_counter_draw_bad": {
+    "_comment": "706 + 180, 360",
+    "x": 886,
+    "y": 360
+  },
+  "judge_counter_draw_drumrolls": {
+    "_comment": "1060 + 180, 360",
+    "x": 1240,
+    "y": 360
+  },
+  "song_info_result": {
+    "x": 1252,
+    "y": 35,
+    "font_size": 40
+  },
+  "song_info_result_subtitle": {
+    "y": 73,
+    "font_size": 22
+  },
+  "result_score_margin": {
+    "x": 21
+  },
+  "result_2p_offset": {
+    "y": -288
+  },
+  "result_chara": {
+    "x": 150,
+    "y": 300
+  },
+  "result_nameplate": {
+    "x": 265,
+    "y": 80,
+    "height": 300
+  },
+  "result_flowers_offset": {
+    "x": 792
+  },
+  "high_score_indicator_margin": {
+    "x": 14
+  },
+  "diff_sort_stat_num_star": {
+    "x": 70,
+    "y": -108
+  },
+  "diff_sort_margin_1": {
+    "x": 25
+  },
+  "diff_sort_margin_2": {
+    "x": 23
+  },
+  "diff_sort_margin_3": {
+    "x": 10
+  },
+  "diff_sort_offset": {
+    "x": 100
+  },
+  "diff_sort_offset_2": {
+    "x": 245
+  },
+  "neiro_text": {
+    "x": 235,
+    "y": 1000,
+    "font_size": 50
+  },
+  "neiro_counter_margin": {
+    "x": 20
+  },
+  "option_p2": {
+    "x": 800
+  },
+  "option_text_in": {
+    "x": 100
+  },
+  "modifier_text": {
+    "x": 330,
+    "y": 823,
+    "font_size": 30
+  },
+  "modifier_offset": {
+    "y": 50
+  },
+  "modifier_offset_2": {
+    "x": 92,
+    "y": 110
+  },
+  "song_box_bpm": {
+    "x": 628,
+    "y": 120,
+    "font_size": 20
+  },
+  "preimage": {
+    "x": 20,
+    "y": 30,
+    "width": 53,
+    "height": 53
+  },
+  "song_timer": {
+    "x": 19,
+    "y": 176,
+    "width": 268,
+    "height": 7
+  },
+  "gauge_2p_offset": {
+    "y": 228
+  },
+  "judge_pos": {
+    "x": 414,
+    "y": 256
+  },
+  "score_counter_pos": {
+    "x": 150,
+    "y": 185
+  },
+  "score_counter_2p_y_offset": {
+    "y": 130
+  },
+  "score_counter_animation_start_y": {
+    "y": 148
+  },
+  "score_counter_animation_p2_offset": {
+    "y": 510
+  },
+  "note_arc_start_x_offset": {
+    "x": 350
+  },
+  "note_arc_curve_height": {
+    "height": 425
+  },
+  "note_arc_balloon_p2_y": {
+    "y": 435
+  },
+  "combo_announce_add_x": {
+    "x": 435
+  },
+  "combo_announce_thousands_add_x": {
+    "x": 429
+  },
+  "combo_announce_number_thousands_x": {
+    "x": -23
+  },
+  "combo_announce_text_offset": {
+    "x": -30
+  },
+  "combo_announce_thousands_offset": {
+    "x": -110
+  },
+  "combo_announce_hundreds_offset": {
+    "x": 20
+  },
+  "combo_glimmer_1": {
+    "x": 225,
+    "y": 210
+  },
+  "combo_glimmer_2": {
+    "x": 200,
+    "y": 230
+  },
+  "combo_glimmer_3": {
+    "x": 250,
+    "y": 230
+  },
+  "combo_announce_p2_y_offset": {
+    "y": 376
+  },
+  "search_box": {
+    "width": 400,
+    "height": 60
+  },
+  "attract_camera_viewport": {
+    "x": 332,
+    "y": 119,
+    "width": 630,
+    "height": 470
+  },
+  "genre_bg_center_x": {
+    "x": 638.5
+  },
+  "genre_bg_select_boundary": {
+    "x": 442,
+    "width": 835
+  },
+  "diff_sort_star_spacing": {
+    "x": 40.5
+  },
+  "branch_indicator_y_offset": {
+    "y": 70
+  },
+  "clear_animation_x_spacing": {
+    "x": 60
+  },
+  "box_folder_max_size": {
+    "width": 344,
+    "height": 424
+  },
+  "neiro_counter_x_offset": {
+    "x": 60
+  },
+  "game_chara_balloon": {
+    "x": 420,
+    "y": 120
+  },
+  "game_chara_p1": {
+    "x": 160,
+    "y": 13
+  },
+  "game_chara_p2": {
+    "x": 160,
+    "y": 372
+  },
+  "song_select_bg_diff_p2_offset": {
+    "x": 1025
+  }
+}

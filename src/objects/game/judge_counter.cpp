@@ -50,43 +50,43 @@ void JudgeCounter::draw() {
 
     float margin = tex.skin_config[SC::JUDGE_COUNTER_MARGIN].x;
 
-    draw_counter(good / (float)total_notes * 100,
-                 tex.skin_config[SC::JUDGE_COUNTER_1].x,
-                 tex.skin_config[SC::JUDGE_COUNTER_1].y,
+    draw_counter(good / (float)total_notes * 100, // SC::JUDGE_COUNTER_DRAW_TOTAL_NOTES_GOOD
+                 260,
+                 360,
                  margin, orange);
 
-    draw_counter(ok / (float)total_notes * 100,
-                 tex.skin_config[SC::JUDGE_COUNTER_1].x,
-                 tex.skin_config[SC::JUDGE_COUNTER_3].y,
+    draw_counter(ok / (float)total_notes * 100, // SC::JUDGE_COUNTER_DRAW_TOTAL_NOTES_OK
+                 353 + 260,
+                 360,
                  margin, orange);
 
-    draw_counter(bad / (float)total_notes * 100,
-                 tex.skin_config[SC::JUDGE_COUNTER_1].x,
-                 tex.skin_config[SC::JUDGE_COUNTER_4].x,
+    draw_counter(bad / (float)total_notes * 100, // SC::JUDGE_COUNTER_DRAW_TOTAL_NOTES_BAD
+                 706 + 260,
+                 360,
                  margin, orange);
 
-    draw_counter((good + ok) / (float)total_notes * 100,
-                 tex.skin_config[SC::JUDGE_COUNTER_3].x,
-                 tex.skin_config[SC::JUDGE_COUNTER_4].y,
+    draw_counter((good + ok) / (float)total_notes * 100, // SC::JUDGE_COUNTER_DRAW_TOTAL_NOTES_GOOD_AND_OK
+                 -4096,
+                 -4096,
                  margin, orange);
 
-    draw_counter(good,
-                 tex.skin_config[SC::JUDGE_COUNTER_2].x,
-                 tex.skin_config[SC::JUDGE_COUNTER_1].y,
+    draw_counter(good, // SC::JUDGE_COUNTER_DRAW_GOOD
+                 180,
+                 360,
                  margin, white);
 
-    draw_counter(ok,
-                 tex.skin_config[SC::JUDGE_COUNTER_2].x,
-                 tex.skin_config[SC::JUDGE_COUNTER_3].y,
+    draw_counter(ok, // SC::JUDGE_COUNTER_DRAW_OK
+                 353 + 180,
+                 360,
                  margin, white);
 
-    draw_counter(bad,
-                 tex.skin_config[SC::JUDGE_COUNTER_2].x,
-                 tex.skin_config[SC::JUDGE_COUNTER_4].x,
+    draw_counter(bad, // SC::JUDGE_COUNTER_DRAW_BAD
+                 706 + 180,
+                 360,
                  margin, white);
 
-    draw_counter(drumrolls,
-                 tex.skin_config[SC::JUDGE_COUNTER_2].x,
-                 tex.skin_config[SC::JUDGE_COUNTER_4].width,
+    draw_counter(drumrolls, // SC::JUDGE_COUNTER_DRAW_DRUMROLLS
+                 1060 + 180,
+                 360,
                  margin, white);
 }
