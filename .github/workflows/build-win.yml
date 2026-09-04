@@ -1,0 +1,119 @@
+name: Build YataiDON (Windows Only)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    name: Build on Windows
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+      - name: Configure Git credentials
+        shell: bash
+        run: |
+          git config --global url."https://${{ secrets.GITEA_USER }}:${{ secrets.GITEA_TOKEN }}@ese.tjadataba.se/".insteadOf "https://ese.tjadataba.se/"
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Get submodule hash
+        id: submod
+        shell: bash
+        run: |
+          echo "sha_ptg=$(git ls-tree HEAD Skins/PyTaikoGreen | awk '{print $3}')" >> $GITHUB_OUTPUT
+          echo "sha_red=$(git ls-tree HEAD Skins/YataiDONRed | awk '{print $3}')" >> $GITHUB_OUTPUT
+          echo "sha_nijiiro=$(git ls-tree HEAD Skins/YataiDONNijiiro | awk '{print $3}')" >> $GITHUB_OUTPUT
+
+      - name: Cache submodule
+        id: cache-submod
+        uses: actions/cache@v4
+        with:
+          path: |
+            Skins/PyTaikoGreen
+            Skins/YataiDONRed
+            Skins/YataiDONNijiiro
+          key: submod-${{ steps.submod.outputs.sha_ptg }}-${{ steps.submod.outputs.sha_red }}-${{ steps.submod.outputs.sha_nijiiro }}
+
+      - name: Fetch submodule
+        if: steps.cache-submod.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          git submodule update --init --recursive
+
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-pkg-config
+            mingw-w64-x86_64-libsndfile
+            mingw-w64-x86_64-libsamplerate
+            mingw-w64-x86_64-lua
+            mingw-w64-x86_64-ffmpeg
+            mingw-w64-x86_64-sdl3
+            mingw-w64-x86_64-libidn2
+            make
+
+      - name: Configure CMake
+        run: |
+          cmake -B build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_COMPILER=g++ \
+            -DCMAKE_C_COMPILER=gcc \
+            -DNETWORK_URL="${{ secrets.NETWORK_URL }}" \
+            -DNETWORK_AUTH_KEY="${{ secrets.NETWORK_AUTH_KEY }}"
+
+      - name: Build
+        run: |
+          cmake --build build --config Release
+
+      - name: Prepare build artifact
+        shell: bash
+        run: |
+          mkdir -p output/YataiDON-Windows
+
+          cp build/bin/YataiDON.exe output/YataiDON-Windows/
+
+          cp build/bin/*.dll output/YataiDON-Windows/ 2>/dev/null || true
+
+          cp -r Skins output/YataiDON-Windows/
+          cp -r shader output/YataiDON-Windows/
+          cp -r Songs output/YataiDON-Windows/
+
+          cp config.toml output/YataiDON-Windows/
+
+          cp update.ps1 output/YataiDON-Windows/
+          cp update.bat output/YataiDON-Windows/
+
+          # Generate checksums
+          (
+            cd output/YataiDON-Windows
+
+            sha256sum \
+              YataiDON.exe \
+              update.ps1 \
+              update.bat
+
+            find shader -type f | sort | xargs sha256sum
+
+            find . -maxdepth 1 -name "*.dll" | sort | xargs sha256sum
+          ) > checksums-windows.sha256
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: YataiDON-Windows
+          path: output/YataiDON-Windows/
+          if-no-files-found: error
