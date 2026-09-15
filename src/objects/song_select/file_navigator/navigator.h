@@ -29,6 +29,11 @@ private:
     std::vector<fs::path> root_paths;
     std::vector<std::unique_ptr<BaseBox>> items;
     std::map<std::pair<std::string, std::string>, fs::path> song_files;
+    // song path -> every title and subtitle in every language, ASCII-folded, for Song Search
+    std::unordered_map<std::string, std::string> song_search_text;
+    // song path -> level per course 0..4 (-1 = course absent), filled by the same scan; the
+    // difficulty filter reads this instead of re-parsing every chart on disk
+    std::unordered_map<std::string, std::array<int, 5>> song_levels;
     int open_index;
     bool is_init      = false;
     bool is_preloaded = false;
@@ -40,6 +45,7 @@ private:
     std::optional<InlineState>  inline_state;
     std::optional<fs::path>     pending_inline_path;
     FolderBox*                  pending_inline_folder = nullptr;
+    BoxDef                      inline_back_def;      // genre/colours for the repeated back boxes of the open folder
     BoxDef                      pending_inline_box_def;
     bool is_inline = false;
 
@@ -55,6 +61,22 @@ private:
     MoveAnimation* background_move;
 
     std::thread              loader_thread;
+    // Folder open: the song-file scan and the TJA header parse for the folder start on
+    // their own thread the moment the open begins, so that work overlaps the genre
+    // board's ~1.1 s slide instead of starting after it (load_songs_inline_async picks
+    // the result up when it starts, or redoes the work if the path no longer matches).
+    struct InlinePrefetch {
+        fs::path path;
+        std::vector<fs::path> song_paths;
+        std::unordered_map<std::string, std::vector<std::pair<bool, fs::path>>> plan;
+        std::unordered_map<std::string, std::unique_ptr<SongParser>> preparsed;
+    };
+    std::thread              prefetch_thread;
+    std::unique_ptr<InlinePrefetch> prefetch;
+    void start_inline_prefetch(const fs::path& path);
+    void join_prefetch();
+    void scan_song_tree(const fs::path& path, std::vector<fs::path>& song_paths,
+                        std::unordered_map<std::string, std::vector<std::pair<bool, fs::path>>>& plan);
     std::thread              song_files_thread;
     std::mutex               pending_mutex;
     std::queue<std::unique_ptr<BaseBox>> pending_boxes;
@@ -95,7 +117,9 @@ private:
     bool load_gen4_genre_songs(const fs::path& genre_path, const BoxDef& box_def);
     bool has_def_file(const std::filesystem::path& path);
     fs::path find_box_def_folder(const fs::path& song_path);
-    void setup_back_box(const fs::path& path, bool has_children);
+    // `from`: the box that opened the folder, when the caller still has it; otherwise the
+    // matching FolderBox is looked up in `items` before they are cleared.
+    void setup_back_box(const fs::path& path, bool has_children, const BaseBox* from = nullptr);
     bool has_child_folders(const fs::path& path);
 
     void wait_for_song_files();
@@ -132,6 +156,13 @@ public:
     void join_loader();
     void preload(std::vector<fs::path> songs_paths);
     void init(std::vector<fs::path> songs_paths);
+    // navigator is a global, not owned by any Screen, so the skin-reload
+    // screen rebuild never touches it. Its boxes and genre_bg hold raw
+    // Animation*/Shader handles into tex/global_tex, which unload_skin()
+    // frees out from under them. Call before a skin reload (song files
+    // themselves are skin-independent, so is_preloaded is left alone); the
+    // next init() then takes its already-existing full-rebuild path.
+    void reset_for_skin_reload();
     void add_to_recent(const SongBox* song);
     void toggle_favorite(SongBox* song);
     void refresh_scores();

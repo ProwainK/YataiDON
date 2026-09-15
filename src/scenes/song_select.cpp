@@ -96,9 +96,13 @@ void SongSelectScreen::handle_input_search() {
     auto result = player->handle_input_search();
     search_box->current_search = player->search_string;
     if (result) {
-        navigator.current_search = *result;
         search_box.reset();
         state = SongSelectState::BROWSING;
+        // Enter on an empty (or blank) query just closes the box: there is nothing to
+        // search for, so do not open the search folder.
+        const bool blank = result->find_first_not_of(" \t\r\n") == std::string::npos;
+        if (blank) return;
+        navigator.current_search = *result;
         navigator.load_current_directory(navigator.get_current_item()->path);
     }
 }
@@ -248,6 +252,9 @@ std::optional<Screens> SongSelectScreen::update() {
             diff_select_timer = std::make_unique<Timer>(60, current_time, [this]() { select_song((SongBox*)navigator.get_current_item()); });
         } else if (state == SongSelectState::SEARCHING) {
             search_box.emplace();
+            // The don key that opened the search (F/J) is also a typed character still
+            // queued in raylib's char buffer; drop it so it does not land in the query.
+            while (ray::GetCharPressed() > 0) {}
             android_set_keyboard_visible(true);
         } else if (state == SongSelectState::DAN_SELECTED) {
             dan_transition.emplace();

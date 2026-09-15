@@ -198,8 +198,11 @@ SongSelectState SongSelectPlayer::handle_input_browsing(double current_ms) {
 
     if (!navigated && (l_don || r_don)) {
         BaseBox* item = navigator.get_current_item();
-        if (navigator.is_directory(item) && item->collection == COLLECTIONS[5])
+        if (navigator.is_directory(item) && item->collection == COLLECTIONS[5]) {
+            search_guard = true;
+            search_guard_until_ms = ray::GetTime() * 1000.0 + 150.0;
             return SongSelectState::SEARCHING;
+        }
         return select_song();
     }
     return SongSelectState::BROWSING;
@@ -221,8 +224,62 @@ std::optional<std::pair<int,int>> SongSelectPlayer::handle_input_diff_sort(DiffS
     return std::nullopt;
 }
 
+// Strip leading / trailing blanks: ASCII whitespace and the ideographic space U+3000.
+static std::string trim_search(std::string s) {
+    auto blank_at = [&](size_t i, size_t& len) {
+        unsigned char b = (unsigned char)s[i];
+        if (b == ' ' || b == '\t' || b == '\r' || b == '\n') { len = 1; return true; }
+        if (b == 0xE3 && i + 2 < s.size() && (unsigned char)s[i + 1] == 0x80 && (unsigned char)s[i + 2] == 0x80) { len = 3; return true; }
+        return false;
+    };
+    size_t len = 0;
+    while (!s.empty() && blank_at(0, len)) s.erase(0, len);
+    for (;;) {
+        if (s.empty()) break;
+        if (s.size() >= 3 && blank_at(s.size() - 3, len) && len == 3) { s.resize(s.size() - 3); continue; }
+        if (blank_at(s.size() - 1, len) && len == 1) { s.pop_back(); continue; }
+        break;
+    }
+    return s;
+}
+
+static bool any_don_key_down(PlayerNum player_num) {
+    const auto& c = *global_data.config;
+    auto down = [](const std::vector<int>& keys) {
+        for (int k : keys) if (ray::IsKeyDown(k)) return true;
+        return false;
+    };
+    if (player_num != PlayerNum::P2 && (down(c.keys_1p.left_don) || down(c.keys_1p.right_don))) return true;
+    if (player_num != PlayerNum::P1 && (down(c.keys_2p.left_don) || down(c.keys_2p.right_don))) return true;
+    return false;
+}
+
 std::optional<std::string> SongSelectPlayer::handle_input_search() {
+    if (search_guard) {
+        // The don press is seen by the input thread a few ms before raylib's own key state
+        // and the typed character catch up, so the opening keystroke (F/J) would land in the
+        // query. Swallow typed input for a short grace period and until every don key is up.
+        while (ray::GetCharPressed() > 0) {}
+        if (ray::GetTime() * 1000.0 >= search_guard_until_ms && !any_don_key_down(player_num))
+            search_guard = false;
+        return std::nullopt;
+    }
+    // Ctrl+V pastes the clipboard (first line only, UTF-8 as raylib hands it over).
+    if ((ray::IsKeyDown(ray::KEY_LEFT_CONTROL) || ray::IsKeyDown(ray::KEY_RIGHT_CONTROL)) && ray::IsKeyPressed(ray::KEY_V)) {
+        const char* clip = ray::GetClipboardText();
+        if (clip) {
+            std::string s(clip);
+            const size_t eol = s.find_first_of("\r\n");
+            if (eol != std::string::npos) s.resize(eol);
+            search_string += s;
+        }
+        while (ray::GetCharPressed() > 0) {}   // the 'v' itself is not typed
+        return std::nullopt;
+    }
     if (ray::IsKeyPressed(ray::KEY_BACKSPACE)) {
+        // Remove one whole UTF-8 code point (continuation bytes first, then the lead byte).
+        while (!search_string.empty() && ((unsigned char)search_string.back() & 0xC0) == 0x80)
+            search_string.pop_back();
         if (!search_string.empty())
             search_string.pop_back();
     } else if (ray::IsKeyPressed(ray::KEY_ENTER)
@@ -230,7 +287,7 @@ std::optional<std::string> SongSelectPlayer::handle_input_search() {
                || is_l_don_pressed(player_num) || is_r_don_pressed(player_num)
 #endif
     ) {
-        std::string result = search_string;
+        std::string result = trim_search(search_string);
         search_string = "";
         clear_input_buffers();
         return result;
@@ -239,12 +296,17 @@ std::optional<std::string> SongSelectPlayer::handle_input_search() {
     int key = ray::GetCharPressed();
     while (key > 0) {
         if (key == '\n' || key == '\r') {
-            std::string result = search_string;
+            std::string result = trim_search(search_string);
             search_string = "";
             clear_input_buffers();
             return result;
         }
-        search_string += (char)key;
+        // GetCharPressed yields a Unicode code point (IME-composed CJK included); store it as UTF-8.
+        if (key >= 0x20) {
+            int n = 0;
+            const char* utf8 = ray::CodepointToUTF8(key, &n);
+            search_string.append(utf8, n);
+        }
         key = ray::GetCharPressed();
     }
     return std::nullopt;
@@ -484,6 +546,9 @@ void SongSelectPlayer::draw(SongSelectState state, bool is_half, float diff_fade
             : -offset;
     }
 
+    // a skin that draws the option panel itself keeps the character where it is
+    if (option_panel_by_lua) offset = 0.0f;
+
     if (player_num == PlayerNum::P1) {
         nameplate.draw(tex.skin_config[SC::SONG_SELECT_NAMEPLATE_1P].x, tex.skin_config[SC::SONG_SELECT_NAMEPLATE_1P].y);
         chara->draw(tex.skin_config[SC::SONG_SELECT_CHARA_1P].x, tex.skin_config[SC::SONG_SELECT_CHARA_1P].y + (offset * 0.6f), 1.0f);
@@ -492,7 +557,17 @@ void SongSelectPlayer::draw(SongSelectState state, bool is_half, float diff_fade
         chara->draw(tex.skin_config[SC::SONG_SELECT_CHARA_2P].x, tex.skin_config[SC::SONG_SELECT_CHARA_2P].y + (offset * 0.6f), 1.0f);
     }
 
-    if (neiro_selector.has_value()    && !(script && script->draw_option_panel(this, 2))) neiro_selector->draw();
-    if (modifier_selector.has_value() && !(script && script->draw_option_panel(this, 1))) modifier_selector->draw();
+    bool panel_by_lua = false;
+    if (neiro_selector.has_value()) {
+        bool by_lua = script && script->draw_option_panel(this, 2);
+        if (!by_lua) neiro_selector->draw();
+        panel_by_lua = panel_by_lua || by_lua;
+    }
+    if (modifier_selector.has_value()) {
+        bool by_lua = script && script->draw_option_panel(this, 1);
+        if (!by_lua) modifier_selector->draw();
+        panel_by_lua = panel_by_lua || by_lua;
+    }
+    option_panel_by_lua = panel_by_lua;
     if (ura_switch.has_value()) ura_switch->draw();
 }

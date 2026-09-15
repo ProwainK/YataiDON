@@ -20,9 +20,6 @@ void DanGameScreen::on_screen_start() {
     JudgePos::X = tex.skin_config[SC::JUDGE_POS].x;
     JudgePos::Y = tex.skin_config[SC::JUDGE_POS].y;
 
-    if (global_data.config->general.nijiiro_notes) {
-        tex.load_folder("game", "notes_nijiiro");
-    }
     auto rainbow_mask = std::dynamic_pointer_cast<SingleTexture>(tex.textures[BALLOON::RAINBOW_MASK]);
     auto rainbow      = std::dynamic_pointer_cast<SingleTexture>(tex.textures[BALLOON::RAINBOW]);
     if (rainbow_mask && rainbow) {
@@ -69,7 +66,7 @@ void DanGameScreen::init_dan() {
     exam_song_failed.assign(sd.selected_dan_exam.size(), {false, false, false});
     dan_info_cache.reset();
     song_max_combo = 0;
-    dan_gauge.emplace(total_notes, 0, 0, global_data.player_num);
+    dan_gauge.emplace(Gauge::dan(total_notes, global_data.player_num));
 
     // Create player for first song
     const auto& first = sd.selected_dan[0];
@@ -508,7 +505,7 @@ std::optional<Screens> DanGameScreen::update() {
             if (ms_from_start >= players[0]->end_time + 1000 && !score_saved) {
                 check_exam_failures(true, true);
                 save_result_data(false);
-                players[0]->spawn_ending_anim();
+                players[0]->spawn_ending_anim(background.has_value() ? &*background : nullptr);
                 score_saved = true;
             }
             constexpr double SKIP_RESULT_DELAY = 2800.0;
