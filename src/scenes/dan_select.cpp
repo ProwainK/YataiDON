@@ -1,4 +1,6 @@
 #include "dan_select.h"
+#include <tuple>
+#include <climits>
 #ifdef SUPPORT_FUMEN
 #include "../libs/optional/gen4.h"
 #include "../libs/optional/gen3.h"
@@ -38,12 +40,32 @@ Exam DanNavigator::parse_exam(const rapidjson::Value& e) {
     Exam exam;
     exam.type  = e["type"].GetString();
     exam.range = e["range"].GetString();
-    if (e.HasMember("value") && e["value"].IsArray() && e["value"].Size() >= 2) {
+    if (e.HasMember("value") && e["value"].IsArray() && e["value"].Size() >= 1 && e["value"][0].IsArray()) {
+        // per-song borders: [[red, gold], [red, gold], [red, gold]] (gold optional)
+        for (auto& pair : e["value"].GetArray()) {
+            if (!pair.IsArray() || pair.Size() < 1 || !pair[0].IsInt()) continue;
+            const int red  = pair[0].GetInt();
+            const int gold = pair.Size() >= 2 && pair[1].IsInt() ? pair[1].GetInt() : Exam::GOLD_FULL;
+            exam.song_red.push_back(red);
+            exam.song_gold.push_back(gold);
+        }
+        if (!exam.song_red.empty()) { exam.red = exam.song_red[0]; exam.gold = exam.song_gold[0]; }
+    } else if (e.HasMember("value") && e["value"].IsArray() && e["value"].Size() >= 1 && e["value"][0].IsInt()) {
         exam.red  = e["value"][0].GetInt();
-        exam.gold = e["value"][1].GetInt();
+        exam.gold = e["value"].Size() >= 2 && e["value"][1].IsInt() ? e["value"][1].GetInt() : Exam::GOLD_FULL;
     }
-    if (e.HasMember("gothrough") && e["gothrough"].IsBool())
-        exam.gothrough = e["gothrough"].GetBool();
+    // A gold on the wrong side of its red is not a border (bad data would light the rainbow
+    // the moment the value passes it): treat that song as red-only.
+    auto sane = [&](int red, int gold) {
+        if (gold == Exam::GOLD_FULL) return gold;
+        const bool bad = exam.range == "less" ? gold > red : gold < red;
+        return bad ? Exam::GOLD_FULL : gold;
+    };
+    for (size_t i = 0; i < exam.song_gold.size(); i++) exam.song_gold[i] = sane(exam.song_red[i], exam.song_gold[i]);
+    exam.gold = sane(exam.red, exam.gold);
+    // The shape of `value` says how the exam is judged: one [red, gold] pair = the whole
+    // course, one pair per song = each song on its own. (`gothrough` is no longer read.)
+    exam.gothrough = !exam.per_song();
     return exam;
 }
 
@@ -236,23 +258,25 @@ std::vector<DanBoxData> DanNavigator::scan_all_data(const std::vector<fs::path>&
 void DanNavigator::publish(std::vector<DanBoxData>&& data) {
     boxes.clear();
     selected_index = 0;
+    // Order: courses grouped by the folder they sit in (the dan root's own courses first,
+    // then each version set such as "Nijiiro 2026" as one block), and inside a group by the
+    // leading number of the course folder, then by name. The cabinet lists one version at a
+    // time; here every set is listed, but never interleaved.
+    auto order_key = [](const DanBoxData& d) {
+        const std::string set  = d.json_path.parent_path().parent_path().string();
+        const std::string name = d.json_path.parent_path().filename().string();
+        size_t i = 0;
+        while (i < name.size() && (unsigned char)name[i] >= '0' && (unsigned char)name[i] <= '9') i++;
+        int num = INT_MAX;
+        if (i > 0) { try { num = std::stoi(name.substr(0, i)); } catch (...) {} }
+        return std::make_tuple(set, num, name);
+    };
+    std::stable_sort(data.begin(), data.end(),
+                     [&](const DanBoxData& x, const DanBoxData& y) { return order_key(x) < order_key(y); });
     boxes.reserve(data.size());
     for (const DanBoxData& d : data) boxes.push_back(make_box(d));
 
     if (boxes.empty()) { spdlog::warn("DanNavigator: no dan courses found"); return; }
-
-    auto order_key = [](const DanBox* b) -> std::pair<int, std::string> {
-        const std::string name = b->path.parent_path().filename().string();
-        size_t i = 0;
-        while (i < name.size() && (unsigned char)name[i] >= '0' && (unsigned char)name[i] <= '9') i++;
-        if (i == 0) return {INT_MAX, name};
-        try { return {std::stoi(name.substr(0, i)), name}; }
-        catch (...) { return {INT_MAX, name}; }
-    };
-    std::stable_sort(boxes.begin(), boxes.end(),
-                     [&](const std::unique_ptr<DanBox>& a, const std::unique_ptr<DanBox>& b) {
-                         return order_key(a.get()) < order_key(b.get());
-                     });
 
     set_positions(true, 0);
     boxes[selected_index]->expand_box();
